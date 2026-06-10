@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS resultados (
   partido_id   INTEGER NOT NULL REFERENCES partidos(id) UNIQUE,
   goles_local  SMALLINT NOT NULL,
   goles_vis    SMALLINT NOT NULL,
+  goleadores   TEXT DEFAULT '',
   updated_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -92,41 +93,43 @@ CREATE POLICY "anon_all_apuestas"    ON apuestas    FOR ALL TO anon USING (true)
 CREATE POLICY "anon_all_resultados"  ON resultados  FOR ALL TO anon USING (true) WITH CHECK (true);
 CREATE POLICY "anon_all_asistencias" ON asistencias FOR ALL TO anon USING (true) WITH CHECK (true);
 
--- CRÍTICO: dar acceso a la vista al rol anon (sin esto la tabla de posiciones no carga)
-GRANT SELECT ON v_tabla TO anon;
-GRANT SELECT ON v_tabla TO authenticated;
-
--- 5. VISTA: TABLA DE POSICIONES
+-- 5. VISTA: TABLA DE POSICIONES (con pesos COP)
 -- ============================================================
 CREATE OR REPLACE VIEW v_tabla AS
 SELECT
   u.id,
   u.nombre,
   u.apellido,
-  u.nombre || ' ' || u.apellido AS nombre_completo,
-  COUNT(r.id)                    AS evaluados,
-  SUM(CASE
+  u.nombre || ' ' || u.apellido        AS nombre_completo,
+  COALESCE(COUNT(r.id), 0)             AS evaluados,
+  COALESCE(SUM(CASE
     WHEN a.goles_local = r.goles_local AND a.goles_vis = r.goles_vis THEN 3
     WHEN SIGN(a.goles_local - a.goles_vis) = SIGN(r.goles_local - r.goles_vis) THEN 1
     ELSE 0
-  END)                           AS puntos,
-  SUM(CASE
-    WHEN a.goles_local = r.goles_local AND a.goles_vis = r.goles_vis THEN 1
+  END), 0)                             AS puntos,
+  COALESCE(SUM(CASE
+    WHEN a.goles_local = r.goles_local AND a.goles_vis = r.goles_vis THEN 1500
+    WHEN SIGN(a.goles_local - a.goles_vis) = SIGN(r.goles_local - r.goles_vis) THEN 500
     ELSE 0
-  END)                           AS exactos,
-  SUM(CASE
+  END), 0)                             AS pesos,
+  COALESCE(SUM(CASE
+    WHEN a.goles_local = r.goles_local AND a.goles_vis = r.goles_vis THEN 1 ELSE 0
+  END), 0)                             AS exactos,
+  COALESCE(SUM(CASE
     WHEN a.goles_local IS NOT NULL AND a.goles_vis IS NOT NULL
       AND (a.goles_local != r.goles_local OR a.goles_vis != r.goles_vis)
-      AND SIGN(a.goles_local - a.goles_vis) = SIGN(r.goles_local - r.goles_vis) THEN 1
-    ELSE 0
-  END)                           AS aciertos
+      AND SIGN(a.goles_local - a.goles_vis) = SIGN(r.goles_local - r.goles_vis) THEN 1 ELSE 0
+  END), 0)                             AS aciertos
 FROM usuarios u
 LEFT JOIN apuestas   a ON a.usuario_id = u.id
 LEFT JOIN resultados r ON r.partido_id = a.partido_id
-  AND a.goles_local IS NOT NULL
-  AND a.goles_vis   IS NOT NULL
+  AND a.goles_local IS NOT NULL AND a.goles_vis IS NOT NULL
 GROUP BY u.id, u.nombre, u.apellido
 ORDER BY puntos DESC NULLS LAST, exactos DESC NULLS LAST;
+
+-- CRÍTICO: dar acceso a la vista (debe ser DESPUÉS del CREATE VIEW)
+GRANT SELECT ON v_tabla TO anon;
+GRANT SELECT ON v_tabla TO authenticated;
 
 -- 6. INSERTAR LOS 104 PARTIDOS
 -- ============================================================

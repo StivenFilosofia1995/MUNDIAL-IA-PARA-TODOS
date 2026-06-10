@@ -81,6 +81,11 @@ input[type="number"],input[type="text"],select{font-family:'Spline Sans Mono',mo
 .bet-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--grey);border-top:1px solid rgba(0,17,102,.08);padding-top:8px}
 .pts-chip{font-family:'Spline Sans Mono',monospace;font-size:10px;font-weight:600;padding:2px 10px;border:2px solid var(--nodo)}
 .pts-3{background:var(--amarillo);color:var(--nodo)}.pts-1{background:var(--nodo);color:var(--blanco)}.pts-0{background:#e8eaf0;color:var(--grey)}
+.en-vivo-badge{display:inline-flex;align-items:center;gap:5px;background:var(--rojo);color:var(--blanco);font-family:'Spline Sans Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:2px 8px}
+.en-vivo-dot{width:5px;height:5px;background:var(--blanco);border-radius:50%;animation:livepulse 1s infinite;flex:none}
+.goleadores-row{margin-top:7px;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#374151;padding-top:6px;border-top:1px dashed rgba(0,17,102,.15)}
+.live-strip{height:2px;background:linear-gradient(90deg,var(--rojo),transparent);margin-top:8px;animation:livepulse 2s infinite}
+.gol-input{font-family:'Spline Sans Mono',monospace !important;font-size:11px !important;border:1.5px solid rgba(0,17,102,.25) !important;background:#f8f9ff !important;padding:6px 10px !important;width:100%;display:block;margin-top:8px}
 /* TABLA */
 table{width:100%;border-collapse:collapse;background:var(--card);border:2px solid var(--nodo);box-shadow:5px 5px 0 var(--nodo)}
 th,td{border-bottom:1px solid rgba(0,17,102,.1);padding:12px 14px;text-align:left}
@@ -130,7 +135,7 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
   </div>
   <span class="head-title">LA <em>POLLA</em> 2026</span>
   <div class="head-meta">
-    104 PARTIDOS · <b>EXACTO 3 PTS</b> · <b>ACIERTO 1 PT</b><br>HORA COLOMBIANA (UTC–5)
+    104 PARTIDOS · <b>EXACTO 3 PTS → $1.500</b> · <b>ACIERTO 1 PT → $500</b><br>HORA COLOMBIANA (UTC–5)
   </div>
   <div id="userChip" class="user-chip" style="display:none">
     <span class="user-name" id="userLabel">…</span>
@@ -151,7 +156,7 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
 <!-- APUESTAS: los 104 partidos -->
 <section class="tab on" id="tab-apuestas">
   <h2>Mis apuestas</h2>
-  <p class="note">PREDICE EL MARCADOR DE LOS 104 PARTIDOS. SE BLOQUEA AL INICIO DEL PARTIDO. SE GUARDAN AUTOMÁTICAMENTE.</p>
+  <p class="note">EXACTO 3 PTS ($1.500 COP) · ACIERTO 1 PT ($500 COP) · SE GUARDAN AUTOMÁTICO · SE BLOQUEAN AL INICIO.</p>
   <div class="row">
     <select id="betStage"><option value="">TODAS LAS FASES</option></select>
     <button class="btn blue" onclick="location.href='/dashboard.html'">📅 Calendario</button>
@@ -162,7 +167,7 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
 <!-- TABLA -->
 <section class="tab" id="tab-tabla">
   <h2>Tabla de posiciones</h2>
-  <p class="note">3 PTS EXACTO · 1 PT GANADOR/EMPATE · SE RECALCULA SOLO CUANDO SE INGRESA UN RESULTADO.</p>
+  <p class="note">EXACTO 3 PTS = $1.500 · ACIERTO 1 PT = $500 · TABLA EN TIEMPO REAL PARA TODOS.</p>
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;font-family:monospace;font-size:11px;color:var(--grey)">
     <span style="width:8px;height:8px;background:var(--rojo);border-radius:50%;display:inline-block;animation:livepulse 1.4s infinite"></span>
     EN VIVO — la tabla se actualiza en tiempo real para todos
@@ -211,8 +216,10 @@ window.cerrarSesion = () => { localStorage.removeItem('polla-sesion'); window.lo
 const $ = id => document.getElementById(id);
 const DAYS = ['dom','lun','mar','mié','jue','vie','sáb'];
 const flag  = (c,l) => c ? `<img class="flag" src="https://flagcdn.com/w80/${c}.png" alt="${l}">` : `<div class="flag-tbd">${(l||'').slice(0,3)||'?'}</div>`;
-const started = m => new Date(m.fecha+'T'+m.hora+':00-05:00') <= new Date();
-const fmtWhen = m => { const d=new Date(m.fecha+'T12:00:00-05:00'); return `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1} · ${m.hora}`; };
+const started  = m => new Date(m.fecha+'T'+m.hora+':00-05:00') <= new Date();
+const isLive   = m => { if (RESULTADOS[m.id]) return false; const s=new Date(m.fecha+'T'+m.hora+':00-05:00'),mins=(Date.now()-s)/60000; return mins>=0&&mins<130; };
+const fmtPesos = p => '$'+new Intl.NumberFormat('es-CO').format(p);
+const fmtWhen  = m => { const d=new Date(m.fecha+'T12:00:00-05:00'); return `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1} · ${m.hora}`; };
 
 let MATCHES = [], RESULTADOS = {}, APUESTAS_CACHE = {};
 
@@ -250,7 +257,7 @@ async function init() {
 
   MATCHES = partidos || [];
   RESULTADOS = {};
-  (resultados||[]).forEach(r => { RESULTADOS[r.partido_id] = { gl: r.goles_local, gv: r.goles_vis }; });
+  (resultados||[]).forEach(r => { RESULTADOS[r.partido_id] = { gl: r.goles_local, gv: r.goles_vis, gol: r.goleadores||'' }; });
   APUESTAS_CACHE = {};
   (apuestas||[]).forEach(a => { APUESTAS_CACHE[a.partido_id] = { gl: a.goles_local, gv: a.goles_vis }; });
 
@@ -268,10 +275,17 @@ function renderBets() {
   const list = MATCHES.filter(m => !st || m.etapa === st);
   $('betsGrid').innerHTML = list.map(m => {
     const lock = started(m);
+    const live = isLive(m);
     const bet  = APUESTAS_CACHE[m.id] || { gl: '', gv: '' };
     const res  = RESULTADOS[m.id];
     const p    = res ? points(bet, res) : null;
-    return `<div class="bet-card ${lock?'locked':''}" id="card-${m.id}">
+    const statusSpan = res
+      ? `RESULTADO: ${res.gl}–${res.gv}`
+      : (live
+          ? `<span class="en-vivo-badge"><span class="en-vivo-dot"></span>EN VIVO</span>`
+          : (lock ? '⏱ Iniciado' : 'ABIERTO'));
+    const ptsMoney = p === 3 ? 1500 : p === 1 ? 500 : 0;
+    return `<div class="bet-card ${lock?'locked':''} ${live?'saving':''}" id="card-${m.id}">
       <div class="bet-top">
         <span class="stage">${m.etapa}</span>
         <span>P${m.id} · ${fmtWhen(m)}</span>
@@ -288,9 +302,12 @@ function renderBets() {
         <div class="bt right"><span>${m.visitante}</span>${flag(m.codigo_vis,m.visitante)}</div>
       </div>
       <div class="bet-bottom">
-        <span>${res?`RESULTADO: ${res.gl}–${res.gv}`:(lock?'⏱ EN JUEGO':'ABIERTO')}</span>
-        ${p!==null?`<span class="pts-chip pts-${p}">${p} PTS</span>`:''}
-      </div></div>`;
+        <span>${statusSpan}</span>
+        ${p!==null?`<span class="pts-chip pts-${p}">${p} PTS${ptsMoney>0?' · '+fmtPesos(ptsMoney):''}</span>`:''}
+      </div>
+      ${res&&res.gol?`<div class="goleadores-row">⚽ ${res.gol}</div>`:''}
+      ${live?'<div class="live-strip"></div>':''}
+    </div>`;
   }).join('') || '<div class="loading">Sin partidos en esta fase.</div>';
 }
 
@@ -324,7 +341,7 @@ function renderRes() {
   const st = $('resStage').value;
   const list = MATCHES.filter(m => !st || m.etapa === st);
   $('resGrid').innerHTML = list.map(m => {
-    const r = RESULTADOS[m.id] || { gl: '', gv: '' };
+    const r = RESULTADOS[m.id] || { gl: '', gv: '', gol: '' };
     return `<div class="bet-card">
       <div class="bet-top"><span class="stage">${m.etapa}</span><span>P${m.id} · ${fmtWhen(m)}</span></div>
       <div class="bet-teams">
@@ -335,7 +352,10 @@ function renderRes() {
         <input class="score-in" type="number" min="0" max="20"
           value="${r.gv!=null&&r.gv!==''?r.gv:''}" data-m="${m.id}" data-s="gv">
         <div class="bt right"><span>${m.visitante}</span>${flag(m.codigo_vis,m.visitante)}</div>
-      </div></div>`;
+      </div>
+      <input type="text" class="gol-input" placeholder="⚽ Goleadores: Mbappé 23', Kane 67p'"
+        value="${(r.gol||'').replace(/"/g,'&quot;')}" data-m="${m.id}" data-s="gol">
+    </div>`;
   }).join('');
 }
 
@@ -343,8 +363,12 @@ const resTimers = {};
 $('resGrid').addEventListener('input', e => {
   const inp = e.target; if (!inp.dataset.m) return;
   const mid = +inp.dataset.m;
-  RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null };
-  RESULTADOS[mid][inp.dataset.s] = inp.value !== '' ? +inp.value : null;
+  RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null, gol: '' };
+  if (inp.dataset.s === 'gol') {
+    RESULTADOS[mid].gol = inp.value;
+  } else {
+    RESULTADOS[mid][inp.dataset.s] = inp.value !== '' ? +inp.value : null;
+  }
   clearTimeout(resTimers[mid]);
   resTimers[mid] = setTimeout(() => saveResultado(mid), 800);
 });
@@ -353,7 +377,9 @@ async function saveResultado(mid) {
   const r = RESULTADOS[mid];
   if (r.gl == null || r.gv == null) return;
   await sb.from('resultados').upsert({
-    partido_id: mid, goles_local: r.gl, goles_vis: r.gv, updated_at: new Date().toISOString()
+    partido_id: mid, goles_local: r.gl, goles_vis: r.gv,
+    goleadores: r.gol || '',
+    updated_at: new Date().toISOString()
   }, { onConflict: 'partido_id' });
 }
 $('resStage').onchange = renderRes;
@@ -362,12 +388,13 @@ $('resStage').onchange = renderRes;
 async function renderBoard() {
   const { data } = await sb.from('v_tabla').select('*');
   $('board').innerHTML = (data||[]).length
-    ? `<table><tr><th>#</th><th>Participante</th><th class="num">Exactos</th><th class="num">Aciertos</th><th class="num">Evaluados</th><th class="num">Puntos</th></tr>`+
+    ? `<table><tr><th>#</th><th>Participante</th><th class="num">Exactos</th><th class="num">Aciertos</th><th class="num">Evaluados</th><th class="num">Puntos</th><th class="num" style="color:var(--amarillo)">💰 Pesos</th></tr>`+
       (data||[]).map((r,i) =>
         `<tr class="${i<3?'podio-'+(i+1):''} ${r.id===sesion.id?'yo':''}">
           <td>${i+1}</td><td><b>${r.nombre_completo}</b>${r.id===sesion.id?' <small style="font-size:10px;color:var(--grey)">(tú)</small>':''}</td>
           <td class="num">${r.exactos||0}</td><td class="num">${r.aciertos||0}</td>
-          <td class="num">${r.evaluados||0}</td><td class="num big-pts">${r.puntos||0}</td></tr>`
+          <td class="num">${r.evaluados||0}</td><td class="num big-pts">${r.puntos||0}</td>
+          <td class="num" style="font-family:'Spline Sans Mono',monospace;font-size:12px;font-weight:700;color:#15803d">${fmtPesos(r.pesos||0)}</td></tr>`
       ).join('')+'</table>'
     : '<div class="warn">Aún no hay participantes con apuestas evaluadas.</div>';
 }
@@ -452,7 +479,7 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
 // ── REALTIME: resultados en vivo ──────────────────
 sb.channel('resultados-live')
   .on('postgres_changes', { event: '*', schema: 'public', table: 'resultados' }, payload => {
-    if (payload.new) RESULTADOS[payload.new.partido_id] = { gl: payload.new.goles_local, gv: payload.new.goles_vis };
+    if (payload.new) RESULTADOS[payload.new.partido_id] = { gl: payload.new.goles_local, gv: payload.new.goles_vis, gol: payload.new.goleadores||'' };
     // Actualiza apuestas si ese tab está activo
     if (document.querySelector('[data-tab="apuestas"].on')) renderBets();
     // Actualiza tabla si está activa, o marca que hay cambios pendientes
