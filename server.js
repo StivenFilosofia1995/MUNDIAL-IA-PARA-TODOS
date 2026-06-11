@@ -3,92 +3,22 @@ const express = require('express');
 const path    = require('path');
 const app     = express();
 
-const PORT             = process.env.PORT || 3000;
-const SUPABASE_URL     = process.env.SUPABASE_URL   || '';
+const PORT             = process.env.PORT              || 3000;
+const SUPABASE_URL     = process.env.SUPABASE_URL      || '';
 const SUPABASE_ANON    = process.env.SUPABASE_ANON_KEY || '';
-const FOOTBALL_API_KEY = process.env.FOOTBALL_API_KEY  || ''; // opcional
+const FOOTBALL_API_KEY = process.env.FOOTBALL_API_KEY  || '';
 
-// ── Frontend config ──────────────────────────────────────────────
-app.get('/config.js', (req, res) => {
-  res.setHeader('Content-Type', 'application/javascript');
-  res.send(`window.SUPABASE_URL="${SUPABASE_URL}";window.SUPABASE_ANON_KEY="${SUPABASE_ANON}";`);
-});
+// ── Helpers de fecha (hora Colombia UTC-5) ───────────────────────
+const colDate    = () => new Date(Date.now() - 5*60*60*1000).toISOString().slice(0,10);   // YYYY-MM-DD
+const colDateNum = () => colDate().replace(/-/g,'');                                        // YYYYMMDD
+const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 
-// ── API: Sincronizar ESPN a pedido ─────────────────────────────
-app.get('/api/sync-espn', async (req, res) => {
-  try {
-    const today = req.query.date || new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${today}`;
-    const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
-    if (!r.ok) return res.json({ error: `ESPN ${r.status}`, updated: 0 });
-    const { events = [] } = await r.json();
-
-    let updated = 0;
-    for (const ev of events) {
-      const comp = ev.competitions?.[0];
-      if (!comp) continue;
-      const status = ev.status?.type?.name || '';
-      if (!['STATUS_IN_PROGRESS','STATUS_HALFTIME','STATUS_FINAL','STATUS_FULL_TIME'].includes(status)) continue;
-
-      const home = comp.competitors?.find(c => c.homeAway === 'home');
-      const away = comp.competitors?.find(c => c.homeAway === 'away');
-      if (!home || !away) continue;
-
-      const gl = parseInt(home.score ?? '0');
-      const gv = parseInt(away.score ?? '0');
-      const homeEs = TEAM_ES[home.team?.displayName] || TEAM_ES[home.team?.name] || home.team?.displayName || '';
-      const awayEs = TEAM_ES[away.team?.displayName] || TEAM_ES[away.team?.name] || away.team?.displayName || '';
-      if (!homeEs || !awayEs) continue;
-
-      let data = await sbRest(`/partidos?local=eq.${encodeURIComponent(homeEs)}&visitante=eq.${encodeURIComponent(awayEs)}&select=id`);
-      if (!data?.length) {
-        data = await sbRest(`/partidos?local=eq.${encodeURIComponent(awayEs)}&visitante=eq.${encodeURIComponent(homeEs)}&select=id`);
-      }
-      const pid = data?.[0]?.id;
-      if (!pid) continue;
-
-      const goals = (comp.details || [])
-        .filter(d => d.type?.text === 'Goal Scored' || d.type?.id === '70' || d.scoringPlay)
-        .map(d => {
-          const scorer = d.athletesInvolved?.[0]?.displayName || d.participants?.[0]?.displayName || '?';
-          const min = d.clock?.value != null ? Math.round(d.clock.value / 60) + "'" : '';
-          const pen = d.penaltyKick ? ' (pen)' : '';
-          const og = d.ownGoal ? ' (pp)' : '';
-          return `${scorer}${min ? ' '+min : ''}${pen}${og}`;
-        });
-
-      await sbRest('/resultados', 'POST', [{
-        partido_id: pid,
-        goles_local: gl,
-        goles_vis: gv,
-        goleadores: goals.join(' · '),
-        updated_at: new Date().toISOString()
-      }]);
-      updated++;
-    }
-    res.json({ updated, error: null });
-  } catch (e) {
-    res.json({ error: e.message, updated: 0 });
-  }
-});
-
-// ── API: marcadores en vivo (polling de clientes) ───────────────
-app.get('/api/live', async (req, res) => {
-  const data = await sbRest('/resultados?select=partido_id,goles_local,goles_vis,goleadores,updated_at');
-  res.json({ ok: true, ts: Date.now(), resultados: data || [] });
-});
-
-app.use(express.static(path.join(__dirname, 'public')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.listen(PORT, () => console.log(`Polla NODO corriendo en :${PORT}`));
-
-// ── Nombres de equipos en español ───────────────────────────────
+// ── Mapeo de nombres: inglés → español ───────────────────────────
 const TEAM_ES = {
   'Mexico':'México','South Africa':'Sudáfrica','South Korea':'Corea del Sur',
   'Czech Republic':'República Checa','Czechia':'República Checa',
   'Bosnia and Herzegovina':'Bosnia y Herzegovina','Bosnia & Herzegovina':'Bosnia y Herzegovina',
-  'United States':'Estados Unidos','USA':'Estados Unidos',
+  'United States':'Estados Unidos','United States of America':'Estados Unidos','USA':'Estados Unidos',
   'Haiti':'Haití','Haïti':'Haití',
   'Brazil':'Brasil','Morocco':'Marruecos','Switzerland':'Suiza',
   "Côte d'Ivoire":'Costa de Marfil','Ivory Coast':'Costa de Marfil',
@@ -105,8 +35,26 @@ const TEAM_ES = {
   'Scotland':'Escocia','Serbia':'Serbia','Austria':'Austria',
   'Jordan':'Jordania','Algeria':'Argelia','Tunisia':'Túnez',
   'Senegal':'Senegal','Nigeria':'Nigeria','Cameroon':'Camerún',
-  'Qatar':'Catar','Curacao':'Curazao','Curaçao':'Curazao',
-  'Curaçao':'Curazao','Cabo Verde':'Cabo Verde',
+  'Qatar':'Catar','Curacao':'Curazao','Curaçao':'Curazao','Cabo Verde':'Cabo Verde',
+  'Peru':'Perú','Chile':'Chile','Bolivia':'Bolivia','Venezuela':'Venezuela',
+  'Honduras':'Honduras','Costa Rica':'Costa Rica','Guatemala':'Guatemala','Cuba':'Cuba',
+  'South Sudan':'Sudán del Sur','Kenya':'Kenia','Tanzania':'Tanzania',
+  'Netherlands':'Países Bajos','Wales':'Gales','Northern Ireland':'Irlanda del Norte',
+  'Republic of Ireland':'Irlanda','Slovakia':'Eslovaquia','Slovenia':'Eslovenia',
+  'Romania':'Rumanía','Hungary':'Hungría','Denmark':'Dinamarca','Sweden':'Suecia',
+  'Finland':'Finlandia','Norway':'Noruega','Iceland':'Islandia',
+  'Greece':'Grecia','Poland':'Polonia','Ukraine':'Ucrania',
+  'Russia':'Rusia','Belarus':'Bielorrusia','Georgia':'Georgia',
+  'Azerbaijan':'Azerbaiyán','Kazakhstan':'Kazajistán',
+  'Oman':'Omán','Kuwait':'Kuwait','UAE':'Emiratos Árabes','United Arab Emirates':'Emiratos Árabes',
+  'Bahrain':'Baréin','Lebanon':'Líbano','Palestine':'Palestina','Syria':'Siria',
+  'China':'China','Thailand':'Tailandia','Vietnam':'Vietnam','Indonesia':'Indonesia',
+  'Malaysia':'Malasia','Philippines':'Filipinas','India':'India',
+  'Zambia':'Zambia','Zimbabwe':'Zimbabue','Angola':'Angola','Mozambique':'Mozambique',
+  'Ethiopia':'Etiopía','Uganda':'Uganda',
+  'Trinidad and Tobago':'Trinidad y Tobago','Jamaica':'Jamaica',
+  'El Salvador':'El Salvador','Nicaragua':'Nicaragua',
+  'Mexico':'México',  // alias por si acaso
 };
 
 // ── Supabase REST helper ─────────────────────────────────────────
@@ -138,125 +86,296 @@ async function findPartidoId(localEs, visEs) {
 async function upsertResultado(pid, gl, gv, goleadores) {
   if (gl == null || gv == null) return;
   await sbRest('/resultados', 'POST', [{
-    partido_id: pid,
-    goles_local: gl,
-    goles_vis: gv,
-    goleadores: goleadores || '',
-    updated_at: new Date().toISOString()
+    partido_id: pid, goles_local: gl, goles_vis: gv,
+    goleadores: goleadores || '', updated_at: new Date().toISOString()
   }]);
 }
 
-// ── ESPN FREE API (sin clave, automático) ────────────────────────
-// Fecha en hora Colombia (UTC-5) para no pedir el día equivocado
-const todayESPN = () => new Date(Date.now() - 5*60*60*1000).toISOString().slice(0,10).replace(/-/g,'');
+// ── SOURCE 1: ESPN (múltiples slugs + headers de navegador) ──────
+const ESPN_SLUGS = ['fifa.world', 'fifa.world.cup'];
 
-let liveActive = false; // Hay partidos en vivo ahora mismo
-
-async function pollESPN() {
-  try {
-    const today = todayESPN();
-    const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${today}`;
-    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-    if (!res.ok) { console.error('[espn]', res.status); return; }
-    const { events = [] } = await res.json();
-
-    let updated = 0;
-    let hasLive = false;
-    for (const ev of events) {
-      const comp   = ev.competitions?.[0];
-      if (!comp) continue;
-      const status = ev.status?.type?.name || '';
-      if (status === 'STATUS_IN_PROGRESS' || status === 'STATUS_HALFTIME') hasLive = true;
-      if (!['STATUS_IN_PROGRESS','STATUS_HALFTIME','STATUS_FINAL','STATUS_FULL_TIME'].includes(status)) continue;
-
-      const home = comp.competitors?.find(c => c.homeAway === 'home');
-      const away = comp.competitors?.find(c => c.homeAway === 'away');
-      if (!home || !away) continue;
-
-      const gl = parseInt(home.score ?? '0');
-      const gv = parseInt(away.score ?? '0');
-
-      const homeEs = TEAM_ES[home.team?.displayName] || TEAM_ES[home.team?.name] || home.team?.displayName || '';
-      const awayEs = TEAM_ES[away.team?.displayName] || TEAM_ES[away.team?.name] || away.team?.displayName || '';
-      if (!homeEs || !awayEs) continue;
-
-      const pid = await findPartidoId(homeEs, awayEs);
-      if (!pid) { console.log('[espn] no mapeado:', homeEs, 'vs', awayEs, '| ESPN raw:', home.team?.displayName, 'vs', away.team?.displayName); continue; }
-
-      // Goleadores desde ESPN details
-      const goals = (comp.details || [])
-        .filter(d => d.type?.text === 'Goal Scored' || d.type?.id === '70' || d.scoringPlay)
-        .map(d => {
-          const scorer = d.athletesInvolved?.[0]?.displayName || d.participants?.[0]?.displayName || '?';
-          const min    = d.clock?.value != null ? Math.round(d.clock.value / 60) + "'" : '';
-          const pen    = d.penaltyKick ? ' (pen)' : '';
-          const og     = d.ownGoal ? ' (pp)' : '';
-          return `${scorer}${min ? ' '+min : ''}${pen}${og}`;
-        });
-
-      await upsertResultado(pid, gl, gv, goals.join(' · '));
-      console.log(`[espn] ${homeEs} ${gl}–${gv} ${awayEs}${goals.length ? ' | '+goals.join(', ') : ''}`);
-      updated++;
-    }
-    liveActive = hasLive;
-    if (updated) console.log(`[espn] ${updated} partidos actualizados`);
-    else if (events.length) console.log(`[espn] ${events.length} eventos hoy, ninguno actualizado (fechaESPN=${today})`);
-  } catch (e) {
-    console.error('[espn]', e.message);
+async function fetchESPN(dateNum) {
+  for (const slug of ESPN_SLUGS) {
+    try {
+      const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${dateNum}&limit=50`;
+      const r = await fetch(url, {
+        headers: { 'User-Agent': BROWSER_UA, 'Accept': 'application/json', 'Referer': 'https://www.espn.com/' }
+      });
+      if (!r.ok) { console.log(`[espn:${slug}] HTTP ${r.status}`); continue; }
+      const { events = [] } = await r.json();
+      if (events.length > 0) { console.log(`[espn:${slug}] ${events.length} eventos`); return events; }
+      console.log(`[espn:${slug}] 0 eventos`);
+    } catch(e) { console.error(`[espn:${slug}]`, e.message); }
   }
+  return [];
 }
 
-// ── football-data.org (opcional, si el usuario pone FOOTBALL_API_KEY) ───
+async function processESPN(events) {
+  let updated = 0, hasLive = false;
+  for (const ev of events) {
+    const comp   = ev.competitions?.[0];
+    if (!comp) continue;
+    const status = ev.status?.type?.name || '';
+    if (status === 'STATUS_IN_PROGRESS' || status === 'STATUS_HALFTIME') hasLive = true;
+    if (!['STATUS_IN_PROGRESS','STATUS_HALFTIME','STATUS_FINAL','STATUS_FULL_TIME'].includes(status)) continue;
+
+    const home = comp.competitors?.find(c => c.homeAway === 'home');
+    const away = comp.competitors?.find(c => c.homeAway === 'away');
+    if (!home || !away) continue;
+
+    const gl = parseInt(home.score ?? '0');
+    const gv = parseInt(away.score ?? '0');
+    const homeEs = TEAM_ES[home.team?.displayName] || TEAM_ES[home.team?.name] || home.team?.displayName || '';
+    const awayEs = TEAM_ES[away.team?.displayName] || TEAM_ES[away.team?.name] || away.team?.displayName || '';
+    if (!homeEs || !awayEs) {
+      console.log('[espn] sin mapeo:', home.team?.displayName, 'vs', away.team?.displayName);
+      continue;
+    }
+    const pid = await findPartidoId(homeEs, awayEs);
+    if (!pid) { console.log('[espn] no en DB:', homeEs, 'vs', awayEs); continue; }
+
+    const goals = (comp.details || [])
+      .filter(d => d.type?.text === 'Goal Scored' || d.type?.id === '70' || d.scoringPlay)
+      .map(d => {
+        const n = d.athletesInvolved?.[0]?.displayName || d.participants?.[0]?.displayName || '?';
+        const m = d.clock?.value != null ? Math.round(d.clock.value/60)+"'" : '';
+        return `${n}${m?' '+m:''}${d.penaltyKick?' (pen)':''}${d.ownGoal?' (pp)':''}`;
+      });
+
+    await upsertResultado(pid, gl, gv, goals.join(' · '));
+    console.log(`[espn] ✓ ${homeEs} ${gl}–${gv} ${awayEs}${goals.length?' | '+goals.join(', '):''}`);
+    updated++;
+  }
+  return { updated, hasLive };
+}
+
+// ── SOURCE 2: SofaScore (sin API key, muy confiable) ─────────────
+// scoreCache evita re-pedir goleadores si el marcador no cambió
+const scoreCache = new Map();
+
+async function fetchSofaScore(date) {
+  try {
+    const url = `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${date}`;
+    const r = await fetch(url, {
+      headers: {
+        'User-Agent': BROWSER_UA,
+        'Accept': 'application/json',
+        'Referer': 'https://www.sofascore.com/',
+        'Origin': 'https://www.sofascore.com'
+      }
+    });
+    if (!r.ok) { console.error('[sofa] HTTP', r.status); return []; }
+    const { events = [] } = await r.json();
+    // Filtra solo partidos del Mundial
+    const wc = events.filter(ev => {
+      const t = (ev.tournament?.uniqueTournament?.name || ev.tournament?.name || '').toLowerCase();
+      return t.includes('world cup') || t.includes('mundial') || t.includes('copa del mundo');
+    });
+    console.log(`[sofa] ${events.length} eventos totales, ${wc.length} Mundial`);
+    return wc;
+  } catch(e) { console.error('[sofa]', e.message); return []; }
+}
+
+async function getSofaGoals(eventId) {
+  try {
+    const url = `https://api.sofascore.com/api/v1/event/${eventId}/incidents`;
+    const r = await fetch(url, {
+      headers: { 'User-Agent': BROWSER_UA, 'Referer': 'https://www.sofascore.com/' }
+    });
+    if (!r.ok) return '';
+    const { incidents = [] } = await r.json();
+    return incidents
+      .filter(i => i.incidentType === 'goal' || i.incidentType === 'penalty')
+      .map(i => {
+        const n = i.player?.name || i.player?.shortName || '?';
+        const t = i.time ? `${i.time}'` : (i.addedTime ? `${i.addedTime}'` : '');
+        const pen = i.incidentType === 'penalty' ? ' (pen)' : '';
+        const og  = i.isOwnGoal ? ' (pp)' : '';
+        return `${n}${t?' '+t:''}${pen}${og}`;
+      })
+      .join(' · ');
+  } catch { return ''; }
+}
+
+async function processSofa(events) {
+  let updated = 0, hasLive = false;
+  for (const ev of events) {
+    const status = ev.status?.type;
+    if (['inprogress','halftime','pause'].includes(status)) hasLive = true;
+    if (!['inprogress','halftime','pause','finished'].includes(status)) continue;
+
+    const gl = ev.homeScore?.current ?? ev.homeScore?.display ?? 0;
+    const gv = ev.awayScore?.current ?? ev.awayScore?.display ?? 0;
+
+    const homeEs = TEAM_ES[ev.homeTeam?.name] || TEAM_ES[ev.homeTeam?.shortName] || ev.homeTeam?.name || '';
+    const awayEs = TEAM_ES[ev.awayTeam?.name] || TEAM_ES[ev.awayTeam?.shortName] || ev.awayTeam?.name || '';
+    if (!homeEs || !awayEs) {
+      console.log('[sofa] sin mapeo:', ev.homeTeam?.name, 'vs', ev.awayTeam?.name);
+      continue;
+    }
+    const pid = await findPartidoId(homeEs, awayEs);
+    if (!pid) { console.log('[sofa] no en DB:', homeEs, 'vs', awayEs); continue; }
+
+    // Solo pide goleadores cuando el marcador cambió (evita 1 req extra por ciclo)
+    const key = `${gl}-${gv}`;
+    let gol;
+    if (scoreCache.get(pid) !== key) {
+      gol = await getSofaGoals(ev.id);
+      scoreCache.set(pid, key);
+    } else {
+      const ex = await sbRest(`/resultados?partido_id=eq.${pid}&select=goleadores`);
+      gol = ex?.[0]?.goleadores || '';
+    }
+
+    await upsertResultado(pid, gl, gv, gol);
+    console.log(`[sofa] ✓ ${homeEs} ${gl}–${gv} ${awayEs}`);
+    updated++;
+  }
+  return { updated, hasLive };
+}
+
+// ── SOURCE 3: football-data.org (si hay FOOTBALL_API_KEY) ────────
 async function pollFootballData() {
   try {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = colDate();
     const res = await fetch(
       `https://api.football-data.org/v4/competitions/WC/matches?dateFrom=${today}&dateTo=${today}`,
       { headers: { 'X-Auth-Token': FOOTBALL_API_KEY } }
     );
     if (!res.ok) { console.error('[fd]', res.status); return; }
     const { matches = [] } = await res.json();
-
     for (const m of matches) {
       if (!['IN_PLAY','PAUSED','FINISHED'].includes(m.status)) continue;
       const gl = m.score.fullTime.home ?? m.score.regularTime?.home;
       const gv = m.score.fullTime.away ?? m.score.regularTime?.away;
       if (gl == null || gv == null) continue;
-
       const localEs = TEAM_ES[m.homeTeam.name] || m.homeTeam.name;
       const visEs   = TEAM_ES[m.awayTeam.name] || m.awayTeam.name;
       const pid     = await findPartidoId(localEs, visEs);
       if (!pid) continue;
-
       const goleadores = (m.goals || []).map(g => {
         const tipo = g.type === 'PENALTY' ? ' (pen)' : g.type === 'OWN_GOAL' ? ' (pp)' : '';
         return `${g.scorer?.name || '?'} ${g.minute}'${tipo}`;
       }).join(' · ');
-
       await upsertResultado(pid, gl, gv, goleadores);
-      console.log(`[fd] ${localEs} ${gl}–${gv} ${visEs}`);
+      console.log(`[fd] ✓ ${localEs} ${gl}–${gv} ${visEs}`);
     }
-  } catch (e) {
-    console.error('[fd]', e.message);
-  }
+  } catch(e) { console.error('[fd]', e.message); }
 }
 
+// ── MASTER POLL: ESPN + SofaScore en paralelo ─────────────────────
+let liveActive = false;
+
+async function pollAll() {
+  const date = colDate(), dateNum = colDateNum();
+  // Las dos fuentes se consultan en paralelo
+  const [espnEvents, sofaEvents] = await Promise.all([
+    fetchESPN(dateNum),
+    fetchSofaScore(date)
+  ]);
+  const er = espnEvents.length ? await processESPN(espnEvents) : { updated:0, hasLive:false };
+  const sr = sofaEvents.length ? await processSofa(sofaEvents)  : { updated:0, hasLive:false };
+  liveActive = er.hasLive || sr.hasLive;
+  const tot = er.updated + sr.updated;
+  if (tot)  console.log(`[poll] ${tot} actualizado(s) — espn:${er.updated} sofa:${sr.updated}`);
+  else      console.log(`[poll] sin cambios (${date})`);
+}
+
+// ── API routes ────────────────────────────────────────────────────
+app.get('/config.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.send(`window.SUPABASE_URL="${SUPABASE_URL}";window.SUPABASE_ANON_KEY="${SUPABASE_ANON}";`);
+});
+
+// Fuerza sync manual (botón en admin)
+app.get('/api/sync-espn', async (req, res) => {
+  try {
+    const [espnEvents, sofaEvents] = await Promise.all([fetchESPN(colDateNum()), fetchSofaScore(colDate())]);
+    const er = espnEvents.length ? await processESPN(espnEvents) : { updated:0 };
+    const sr = sofaEvents.length ? await processSofa(sofaEvents)  : { updated:0 };
+    res.json({ updated: er.updated + sr.updated, espnEvents: espnEvents.length, sofaEvents: sofaEvents.length });
+  } catch(e) { res.json({ error: e.message }); }
+});
+
+// Marcadores actuales (polling de clientes cada 30s)
+app.get('/api/live', async (req, res) => {
+  const data = await sbRest('/resultados?select=partido_id,goles_local,goles_vis,goleadores,updated_at');
+  res.json({ ok: true, ts: Date.now(), resultados: data || [] });
+});
+
+// Debug: qué retornan las fuentes sin guardar nada — abre en el navegador para diagnosticar
+app.get('/api/debug-live', async (req, res) => {
+  const date = colDate(), dateNum = colDateNum();
+  const out = { date };
+
+  for (const slug of ESPN_SLUGS) {
+    try {
+      const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${dateNum}&limit=50`;
+      const r = await fetch(url, { headers: { 'User-Agent': BROWSER_UA, 'Accept': 'application/json' } });
+      const body = r.ok ? await r.json() : null;
+      out[`espn_${slug.replace('.','_')}`] = {
+        httpStatus: r.status,
+        events: body?.events?.length ?? 0,
+        live: (body?.events || [])
+          .filter(e => ['STATUS_IN_PROGRESS','STATUS_HALFTIME'].includes(e.status?.type?.name))
+          .map(e => ({
+            name: e.name,
+            status: e.status?.type?.name,
+            score: e.competitions?.[0]?.competitors?.map(c => `${c.team?.displayName} ${c.score}`).join(' vs ')
+          })),
+        allMatches: (body?.events || []).map(e => ({
+          name: e.name,
+          status: e.status?.type?.name,
+          home: e.competitions?.[0]?.competitors?.find(c=>c.homeAway==='home')?.team?.displayName,
+          away: e.competitions?.[0]?.competitors?.find(c=>c.homeAway==='away')?.team?.displayName,
+        }))
+      };
+    } catch(e) { out[`espn_${slug}`] = { error: e.message }; }
+  }
+
+  try {
+    const url = `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${date}`;
+    const r = await fetch(url, { headers: { 'User-Agent': BROWSER_UA, 'Referer': 'https://www.sofascore.com/' } });
+    if (r.ok) {
+      const { events = [] } = await r.json();
+      const wc = events.filter(ev => (ev.tournament?.uniqueTournament?.name||'').toLowerCase().includes('world'));
+      out.sofascore = {
+        httpStatus: r.status,
+        totalEvents: events.length,
+        worldCupEvents: wc.length,
+        matches: wc.map(e => ({
+          home: e.homeTeam?.name,
+          away: e.awayTeam?.name,
+          score: `${e.homeScore?.current??'?'}-${e.awayScore?.current??'?'}`,
+          status: e.status?.type,
+          tournament: e.tournament?.uniqueTournament?.name,
+          eventId: e.id
+        }))
+      };
+    } else out.sofascore = { httpStatus: r.status };
+  } catch(e) { out.sofascore = { error: e.message }; }
+
+  res.json(out);
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('*',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.listen(PORT, () => console.log(`🏆 Polla NODO en :${PORT}`));
+
 // ── Iniciar polling adaptivo ──────────────────────────────────────
-// En vivo: 20s · Normal: 60s (más rápido cuando hay partido activo)
+// En vivo: cada 20s · Idle: cada 60s
 if (SUPABASE_URL && SUPABASE_ANON) {
   if (FOOTBALL_API_KEY) {
     console.log('[live] football-data.org activo (clave configurada)');
     pollFootballData();
     setInterval(pollFootballData, 45_000);
   } else {
-    console.log('[live] ESPN free API — polling adaptivo (20s en vivo, 60s idle)');
-    let pollTimer;
-    async function scheduleESPN() {
-      await pollESPN();
-      pollTimer = setTimeout(scheduleESPN, liveActive ? 20_000 : 60_000);
-    }
-    scheduleESPN();
+    console.log('[live] ESPN + SofaScore — polling adaptivo (20s en vivo · 60s idle)');
+    let t;
+    async function go() { await pollAll(); t = setTimeout(go, liveActive ? 20_000 : 60_000); }
+    go();
   }
 } else {
-  console.log('[live] Sin Supabase — modo offline');
+  console.log('[live] sin Supabase — modo offline');
 }
