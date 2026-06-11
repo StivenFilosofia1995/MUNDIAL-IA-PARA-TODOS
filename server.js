@@ -13,6 +13,65 @@ app.get('/config.js', (req, res) => {
   res.setHeader('Content-Type', 'application/javascript');
   res.send(`window.SUPABASE_URL="${SUPABASE_URL}";window.SUPABASE_ANON_KEY="${SUPABASE_ANON}";`);
 });
+
+// ── API: Sincronizar ESPN a pedido ─────────────────────────────
+app.get('/api/sync-espn', async (req, res) => {
+  try {
+    const today = req.query.date || new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${today}`;
+    const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) return res.json({ error: `ESPN ${r.status}`, updated: 0 });
+    const { events = [] } = await r.json();
+
+    let updated = 0;
+    for (const ev of events) {
+      const comp = ev.competitions?.[0];
+      if (!comp) continue;
+      const status = ev.status?.type?.name || '';
+      if (!['STATUS_IN_PROGRESS','STATUS_HALFTIME','STATUS_FINAL','STATUS_FULL_TIME'].includes(status)) continue;
+
+      const home = comp.competitors?.find(c => c.homeAway === 'home');
+      const away = comp.competitors?.find(c => c.homeAway === 'away');
+      if (!home || !away) continue;
+
+      const gl = parseInt(home.score ?? '0');
+      const gv = parseInt(away.score ?? '0');
+      const homeEs = TEAM_ES[home.team?.displayName] || TEAM_ES[home.team?.name] || home.team?.displayName || '';
+      const awayEs = TEAM_ES[away.team?.displayName] || TEAM_ES[away.team?.name] || away.team?.displayName || '';
+      if (!homeEs || !awayEs) continue;
+
+      let data = await sbRest(`/partidos?local=eq.${encodeURIComponent(homeEs)}&visitante=eq.${encodeURIComponent(awayEs)}&select=id`);
+      if (!data?.length) {
+        data = await sbRest(`/partidos?local=eq.${encodeURIComponent(awayEs)}&visitante=eq.${encodeURIComponent(homeEs)}&select=id`);
+      }
+      const pid = data?.[0]?.id;
+      if (!pid) continue;
+
+      const goals = (comp.details || [])
+        .filter(d => d.type?.text === 'Goal Scored' || d.type?.id === '70' || d.scoringPlay)
+        .map(d => {
+          const scorer = d.athletesInvolved?.[0]?.displayName || d.participants?.[0]?.displayName || '?';
+          const min = d.clock?.value != null ? Math.round(d.clock.value / 60) + "'" : '';
+          const pen = d.penaltyKick ? ' (pen)' : '';
+          const og = d.ownGoal ? ' (pp)' : '';
+          return `${scorer}${min ? ' '+min : ''}${pen}${og}`;
+        });
+
+      await sbRest('/resultados', 'POST', [{
+        partido_id: pid,
+        goles_local: gl,
+        goles_vis: gv,
+        goleadores: goals.join(' · '),
+        updated_at: new Date().toISOString()
+      }]);
+      updated++;
+    }
+    res.json({ updated, error: null });
+  } catch (e) {
+    res.json({ error: e.message, updated: 0 });
+  }
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.listen(PORT, () => console.log(`Polla NODO corriendo en :${PORT}`));

@@ -212,6 +212,7 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
   <div class="row">
     <select id="resStage"><option value="">TODAS LAS FASES</option></select>
     <button class="btn primary" onclick="saveAllResultados()">💾 Guardar todos</button>
+    <button class="btn blue" id="btnSyncESPN" onclick="syncESPN()" style="margin-left:auto">🔄 Sincronizar con ESPN</button>
   </div>
   <div class="bets-grid" id="resGrid"><div class="loading">Cargando…</div></div>
 </section>
@@ -328,6 +329,28 @@ function downloadIcs(m) {
   a.download=`M${m.id}_${m.local}_vs_${m.visitante}.ics`.replace(/\s+/g,'_'); a.click();
 }
 window.downloadIcs = downloadIcs;
+
+// ── SINCRONIZAR CON ESPN ───────────────────────────
+window.syncESPN = async () => {
+  const btn = $('btnSyncESPN');
+  const orig = btn.textContent;
+  btn.textContent = '⏳ Sincronizando…'; btn.disabled = true;
+  try {
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const res = await fetch(`/api/sync-espn?date=${today}`);
+    const { updated = 0, error = null } = await res.json();
+    if (error) throw new Error(error);
+    btn.textContent = `✓ ${updated} actualizado${updated !== 1 ? 's' : ''}`;
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
+    // Recargar resultados
+    if (document.querySelector('[data-tab="resultados"].on')) renderRes();
+    renderBets();
+  } catch (e) {
+    btn.textContent = '✗ Error'; btn.disabled = false;
+    console.error('syncESPN:', e);
+    setTimeout(() => { btn.textContent = orig; }, 3000);
+  }
+};
 
 // ── INIT ────────────────────────────────────────────
 async function init() {
