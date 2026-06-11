@@ -258,6 +258,8 @@ const DAYS = ['dom','lun','mar','mié','jue','vie','sáb'];
 const flag  = (c,l) => c ? `<img class="flag" src="https://flagcdn.com/w80/${c}.png" alt="${l}">` : `<div class="flag-tbd">${(l||'').slice(0,3)||'?'}</div>`;
 const started  = m => new Date(m.fecha+'T'+m.hora+':00-05:00') <= new Date();
 const isLive   = m => { const s=new Date(m.fecha+'T'+m.hora+':00-05:00'),mins=(Date.now()-s)/60000; return mins>=0&&mins<130; };
+// Apuesta bloqueada: el partido es de HOY o ya pasó (cierre al inicio del día, no al pitazo)
+const betLocked = m => m.fecha <= new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
 const fmtPesos = p => '$'+new Intl.NumberFormat('es-CO').format(p);
 const fmtWhen  = m => { const d=new Date(m.fecha+'T12:00:00-05:00'); return `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1} · ${m.hora}`; };
 
@@ -448,7 +450,7 @@ function renderBets() {
 
   const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
   const cards = list.map(m => {
-    const lock = started(m);
+    const lock = betLocked(m);   // cerrado si es hoy o ya pasó
     const live = isLive(m);
     const bet  = APUESTAS_CACHE[m.id] || { gl: '', gv: '' };
     const res  = RESULTADOS[m.id];
@@ -464,7 +466,9 @@ function renderBets() {
     } else {
       const statusSpan = live
         ? `<span class="en-vivo-badge"><span class="en-vivo-dot"></span>EN VIVO</span>`
-        : (lock ? '⏱ Iniciado' : 'ABIERTO');
+        : lock
+        ? `<span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:#888">🔒 Apuesta cerrada</span>`
+        : 'ABIERTO';
       bottomHtml = `
         <div class="bet-bottom"><span>${statusSpan}</span></div>
         ${live ? '<div class="live-strip"></div>' : ''}`;
@@ -498,9 +502,9 @@ const saveTimers = {};
 $('betsGrid').addEventListener('input', e => {
   const inp = e.target; if (!inp.dataset.m) return;
   const mid = +inp.dataset.m;
-  // Bloqueo 1: rechazar si el partido ya comenzó (protege contra manipulación de DOM)
+  // Bloqueo 1: rechazar si el partido es hoy o pasado (protege contra manipulación de DOM)
   const m = MATCHES.find(x => x.id === mid);
-  if (m && started(m)) { inp.value = APUESTAS_CACHE[mid]?.[inp.dataset.s] ?? ''; return; }
+  if (m && betLocked(m)) { inp.value = APUESTAS_CACHE[mid]?.[inp.dataset.s] ?? ''; return; }
   APUESTAS_CACHE[mid] = APUESTAS_CACHE[mid] || { gl: null, gv: null };
   APUESTAS_CACHE[mid][inp.dataset.s] = inp.value !== '' ? +inp.value : null;
   const card = document.getElementById('card-'+mid);
@@ -512,9 +516,9 @@ $('betsGrid').addEventListener('input', e => {
 async function saveApuesta(mid) {
   const bet = APUESTAS_CACHE[mid];
   if (bet.gl == null || bet.gv == null) return;
-  // Bloqueo 2 (definitivo): si el partido ya comenzó, no guardar bajo ninguna circunstancia
+  // Bloqueo 2 (definitivo): si el partido es hoy o pasado, no guardar bajo ninguna circunstancia
   const m = MATCHES.find(x => x.id === mid);
-  if (!m || started(m)) return;
+  if (!m || betLocked(m)) return;
   await sb.from('apuestas').upsert({
     usuario_id: sesion.id, partido_id: mid,
     goles_local: bet.gl, goles_vis: bet.gv,
@@ -534,7 +538,7 @@ window.saveAllApuestas = async () => {
     .filter(([mid, b]) => {
       if (b.gl == null || b.gv == null) return false;
       const m = MATCHES.find(x => x.id === +mid);
-      return m && !started(m);
+      return m && !betLocked(m);
     })
     .map(([mid]) => saveApuesta(+mid));
   await Promise.all(jobs);
@@ -544,21 +548,15 @@ window.saveAllApuestas = async () => {
   }
 };
 
-// Re-renderiza apuestas automáticamente cuando el próximo partido empiece
-// (por si la página estaba abierta antes del pitazo y los inputs quedaron sin bloquear)
+// Re-renderiza apuestas a medianoche COL para bloquear los partidos del nuevo día
 function scheduleNextLockRefresh() {
-  const now = Date.now();
-  const next = MATCHES
-    .filter(m => !started(m))
-    .map(m => new Date(m.fecha + 'T' + m.hora + ':00-05:00').getTime())
-    .filter(t => t > now)
-    .sort((a, b) => a - b)[0];
-  if (!next) return;
-  const ms = next - now + 2000; // 2s de margen tras el pitazo
+  const nowCOL = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+  const msCOL  = new Date(nowCOL.getFullYear(), nowCOL.getMonth(), nowCOL.getDate() + 1, 0, 0, 1).getTime()
+                 - nowCOL.getTime();
   setTimeout(() => {
     if (document.querySelector('[data-tab="apuestas"].on')) renderBets();
-    scheduleNextLockRefresh(); // programa el siguiente
-  }, ms);
+    scheduleNextLockRefresh();
+  }, msCOL);
 }
 scheduleNextLockRefresh();
 
