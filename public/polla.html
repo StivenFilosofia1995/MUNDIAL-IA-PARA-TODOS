@@ -166,6 +166,7 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
 
 <nav>
   <button class="on" data-tab="apuestas">⚽ Apuestas</button>
+  <button data-tab="resultados">📊 Resultados</button>
   <button data-tab="tabla">🏆 Tabla</button>
   <button data-tab="colombia">🇨🇴 Colombia</button>
   <button data-tab="integrantes">👥 Integrantes</button>
@@ -183,6 +184,20 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
     <button class="btn blue" onclick="location.href='/dashboard.html'">📅 Calendario</button>
   </div>
   <div id="betsGrid" class="bets-grid"><div class="loading">Cargando partidos…</div></div>
+</section>
+
+<!-- RESULTADOS: solo lectura, actualizado por ESPN automático -->
+<section class="tab" id="tab-resultados">
+  <h2>Resultados oficiales</h2>
+  <p class="note">MARCADORES EN TIEMPO REAL · ESPN ACTUALIZA AUTOMÁTICAMENTE · SOLO EL ADMIN PUEDE EDITAR</p>
+  <div class="row">
+    <select id="resStage"><option value="">TODAS LAS FASES</option></select>
+    <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--grey);display:flex;align-items:center;gap:6px">
+      <span style="width:7px;height:7px;background:var(--rojo);border-radius:50%;display:inline-block;animation:livepulse 1.4s infinite"></span>
+      ESPN actualiza cada 60s
+    </span>
+  </div>
+  <div class="bets-grid" id="resGrid"><div class="loading">Cargando resultados…</div></div>
 </section>
 
 <!-- TABLA -->
@@ -331,6 +346,9 @@ async function init() {
   const etapas = [...new Set(MATCHES.map(m => m.etapa))];
   $('betStage').innerHTML = '<option value="">TODAS LAS FASES</option>' +
     etapas.map(e => `<option value="${e}">${e.toUpperCase()}</option>`).join('');
+  $('resStage').innerHTML = '<option value="">TODAS LAS FASES</option>' +
+    etapas.map(e => `<option value="${e}">${e.toUpperCase()}</option>`).join('');
+  $('resStage').onchange = renderRes;
   renderBets();
 }
 
@@ -448,6 +466,47 @@ window.saveAllApuestas = async () => {
   }
 };
 
+// ── RESULTADOS (solo lectura) ─────────────────────
+function renderRes() {
+  const st = $('resStage').value;
+  const list = MATCHES.filter(m => !st || m.etapa === st);
+  const played = list.filter(m => RESULTADOS[m.id]);
+  const pending = list.filter(m => !RESULTADOS[m.id] && started(m));
+  const upcoming = list.filter(m => !RESULTADOS[m.id] && !started(m));
+
+  const mkRow = (m, showEmpty) => {
+    const r = RESULTADOS[m.id];
+    const live = isLive(m);
+    return `<div class="bet-card ${live&&!r?'saving':''}">
+      <div class="bet-top">
+        <span class="stage">${m.etapa}</span>
+        <span>P${m.id} · ${fmtWhen(m)}</span>
+        ${live&&!r ? `<span class="en-vivo-badge"><span class="en-vivo-dot"></span>EN VIVO</span>` : ''}
+      </div>
+      <div class="bet-teams">
+        <div class="bt">${flag(m.codigo_local,m.local)}<span>${m.local}</span></div>
+        <div style="font-family:'Archivo Black',sans-serif;font-size:24px;padding:0 10px;color:${r?'var(--nodo)':'var(--grey)'}">
+          ${r ? `${r.gl} – ${r.gv}` : (showEmpty ? '? – ?' : '– –')}
+        </div>
+        <div class="bt right"><span>${m.visitante}</span>${flag(m.codigo_vis,m.visitante)}</div>
+      </div>
+      ${r && r.gol && r.gol.trim() ? `<div class="goleadores-row">⚽ ${r.gol}</div>` : ''}
+      ${live&&!r ? '<div class="live-strip"></div>' : ''}
+    </div>`;
+  };
+
+  const section = (emoji, title, list, showEmpty) => list.length
+    ? `<div style="grid-column:1/-1;margin:8px 0 4px"><h3 style="font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--nodo);text-transform:uppercase;letter-spacing:.05em">${emoji} ${title} (${list.length})</h3></div>` +
+      list.map(m => mkRow(m, showEmpty)).join('')
+    : '';
+
+  $('resGrid').innerHTML =
+    section('✅','Con resultado', played, false) +
+    section('🔴','En juego o sin confirmar', pending, true) +
+    section('📅','Próximos', upcoming, false) ||
+    '<div class="loading">Sin partidos en esta fase.</div>';
+}
+
 // ── TABLA ──────────────────────────────────────────
 async function renderBoard() {
   const { data } = await sb.from('v_tabla').select('*');
@@ -536,6 +595,7 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
   document.getElementById('tab-'+b.dataset.tab).classList.add('on');
   const t = b.dataset.tab;
   if      (t==='tabla')       renderBoard();
+  else if (t==='resultados')  renderRes();
   else if (t==='colombia')    renderCo();
   else if (t==='integrantes') renderMembers();
   else                        renderBets();
@@ -547,6 +607,8 @@ sb.channel('resultados-live')
     if (payload.new) RESULTADOS[payload.new.partido_id] = { gl: payload.new.goles_local, gv: payload.new.goles_vis, gol: payload.new.goleadores||'' };
     // Actualiza apuestas si ese tab está activo
     if (document.querySelector('[data-tab="apuestas"].on')) renderBets();
+    // Actualiza resultados si está activo
+    if (document.querySelector('[data-tab="resultados"].on')) renderRes();
     // Actualiza tabla si está activa, o marca que hay cambios pendientes
     if (document.querySelector('[data-tab="tabla"].on')) {
       renderBoard();
