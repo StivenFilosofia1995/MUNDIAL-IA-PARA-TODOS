@@ -218,7 +218,7 @@ async function init() {
   ]);
   MATCHES = partidos || [];
   RESULTADOS = {};
-  (resultados||[]).forEach(r => { RESULTADOS[r.partido_id] = { gl: r.goles_local, gv: r.goles_vis, gol: r.goleadores||'' }; });
+  (resultados||[]).forEach(r => { RESULTADOS[r.partido_id] = { gl: r.goles_local, gv: r.goles_vis, gol: r.goleadores||'', tar: r.tarjetas||'' }; });
 
   const etapas = [...new Set(MATCHES.map(m => m.etapa))];
   $('stageFilter').innerHTML = '<option value="">TODAS LAS FASES</option>' +
@@ -266,6 +266,7 @@ function resCard(m) {
       <div class="r-team right"><span>${m.visitante}</span>${flag(m.codigo_vis,m.visitante)}</div>
     </div>
     ${r&&r.gol?`<div class="goleadores-dash">${r.gol.split(' · ').map(g=>`<div>⚽ ${g}</div>`).join('')}</div>`:''}
+    ${r&&r.tar?`<div class="goleadores-dash" style="border-top:none;padding-top:0;margin-top:2px">${r.tar.split(' · ').map(t=>`<div>${t}</div>`).join('')}</div>`:''}
     ${!r?`<div style="text-align:center;margin-top:10px"><button class="ics-btn" onclick="downloadIcs(${m.id})">📆 Agendar partido</button></div>`:''}
   </div>`;
 }
@@ -403,7 +404,7 @@ function renderAll() {
 // Realtime (WebSocket Supabase)
 sb.channel('dash-live')
   .on('postgres_changes', { event: '*', schema: 'public', table: 'resultados' }, payload => {
-    if (payload.new) RESULTADOS[payload.new.partido_id] = { gl: payload.new.goles_local, gv: payload.new.goles_vis, gol: payload.new.goleadores||'' };
+    if (payload.new) RESULTADOS[payload.new.partido_id] = { gl: payload.new.goles_local, gv: payload.new.goles_vis, gol: payload.new.goleadores||'', tar: payload.new.tarjetas||'' };
     renderAll();
   })
   .subscribe();
@@ -417,9 +418,9 @@ async function pollLive() {
     let changed = false;
     resultados.forEach(row => {
       const cur = RESULTADOS[row.partido_id];
-      const gl = row.goles_local, gv = row.goles_vis, gol = row.goleadores || '';
-      if (!cur || cur.gl !== gl || cur.gv !== gv || cur.gol !== gol) {
-        RESULTADOS[row.partido_id] = { gl, gv, gol };
+      const gl = row.goles_local, gv = row.goles_vis, gol = row.goleadores || '', tar = row.tarjetas || '';
+      if (!cur || cur.gl !== gl || cur.gv !== gv || cur.gol !== gol || cur.tar !== tar) {
+        RESULTADOS[row.partido_id] = { gl, gv, gol, tar };
         changed = true;
       }
     });

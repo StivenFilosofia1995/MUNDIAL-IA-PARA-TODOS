@@ -83,11 +83,12 @@ async function findPartidoId(localEs, visEs) {
   return data?.[0]?.id ?? null;
 }
 
-async function upsertResultado(pid, gl, gv, goleadores) {
+async function upsertResultado(pid, gl, gv, goleadores, tarjetas = '') {
   if (gl == null || gv == null) return;
   await sbRest('/resultados', 'POST', [{
     partido_id: pid, goles_local: gl, goles_vis: gv,
-    goleadores: goleadores || '', updated_at: new Date().toISOString()
+    goleadores: goleadores || '', tarjetas: tarjetas || '',
+    updated_at: new Date().toISOString()
   }]);
 }
 
@@ -176,15 +177,16 @@ async function fetchSofaScore(date) {
   } catch(e) { console.error('[sofa]', e.message); return []; }
 }
 
-async function getSofaGoals(eventId) {
+async function getSofaIncidents(eventId) {
   try {
     const url = `https://api.sofascore.com/api/v1/event/${eventId}/incidents`;
     const r = await fetch(url, {
       headers: { 'User-Agent': BROWSER_UA, 'Referer': 'https://www.sofascore.com/' }
     });
-    if (!r.ok) return '';
+    if (!r.ok) return { goals: '', cards: '' };
     const { incidents = [] } = await r.json();
-    return incidents
+
+    const goals = incidents
       .filter(i => i.incidentType === 'goal' || i.incidentType === 'penalty')
       .map(i => {
         const n = i.player?.name || i.player?.shortName || '?';
@@ -194,7 +196,21 @@ async function getSofaGoals(eventId) {
         return `${n}${t?' '+t:''}${pen}${og}`;
       })
       .join(' · ');
-  } catch { return ''; }
+
+    const cards = incidents
+      .filter(i => i.incidentType === 'card')
+      .map(i => {
+        const n = i.player?.name || i.player?.shortName || '?';
+        const t = i.time ? `${i.time}'` : '';
+        const emoji = i.incidentClass === 'red' ? '🟥'
+                    : i.incidentClass === 'yellowRed' ? '🟨🟥'
+                    : '🟨';
+        return `${emoji} ${n}${t?' '+t:''}`;
+      })
+      .join(' · ');
+
+    return { goals, cards };
+  } catch { return { goals: '', cards: '' }; }
 }
 
 async function processSofa(events) {
@@ -216,18 +232,20 @@ async function processSofa(events) {
     const pid = await findPartidoId(homeEs, awayEs);
     if (!pid) { console.log('[sofa] no en DB:', homeEs, 'vs', awayEs); continue; }
 
-    // Solo pide goleadores cuando el marcador cambió (evita 1 req extra por ciclo)
+    // Solo pide incidents cuando el marcador cambió (evita req extra por ciclo)
     const key = `${gl}-${gv}`;
-    let gol;
+    let gol = '', tar = '';
     if (scoreCache.get(pid) !== key) {
-      gol = await getSofaGoals(ev.id);
+      const inc = await getSofaIncidents(ev.id);
+      gol = inc.goals; tar = inc.cards;
       scoreCache.set(pid, key);
     } else {
-      const ex = await sbRest(`/resultados?partido_id=eq.${pid}&select=goleadores`);
+      const ex = await sbRest(`/resultados?partido_id=eq.${pid}&select=goleadores,tarjetas`);
       gol = ex?.[0]?.goleadores || '';
+      tar = ex?.[0]?.tarjetas   || '';
     }
 
-    await upsertResultado(pid, gl, gv, gol);
+    await upsertResultado(pid, gl, gv, gol, tar);
     console.log(`[sofa] ✓ ${homeEs} ${gl}–${gv} ${awayEs}`);
     updated++;
   }
@@ -299,7 +317,7 @@ app.get('/api/sync-espn', async (req, res) => {
 
 // Marcadores actuales (polling de clientes cada 30s)
 app.get('/api/live', async (req, res) => {
-  const data = await sbRest('/resultados?select=partido_id,goles_local,goles_vis,goleadores,updated_at');
+  const data = await sbRest('/resultados?select=partido_id,goles_local,goles_vis,goleadores,tarjetas,updated_at');
   res.json({ ok: true, ts: Date.now(), resultados: data || [] });
 });
 

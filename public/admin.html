@@ -86,6 +86,14 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:14px 4vw;font-f
 .gol-del{background:none;border:none;color:var(--rojo);cursor:pointer;font-size:16px;font-weight:700;line-height:1;padding:0 4px;flex:none}
 .btn-add-gol{font-family:'Spline Sans Mono',monospace;font-size:10px;font-weight:700;border:1.5px dashed rgba(0,17,102,.35);background:transparent;color:var(--nodo);padding:4px 10px;cursor:pointer;margin-top:5px;letter-spacing:.05em;width:100%}
 .btn-add-gol:hover{background:#f0f4ff}
+/* TARJETAS BUILDER */
+.card-builder{margin-top:8px}
+.card-rows{display:flex;flex-direction:column;gap:5px}
+.card-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;background:#fff8f0;border:1px solid rgba(206,17,38,.18);padding:5px 7px}
+.card-row .card-name{flex:1;min-width:110px;font-family:'Spline Sans Mono',monospace;font-size:11px;border:1.5px solid rgba(206,17,38,.25);background:#fff;padding:3px 7px;color:var(--ink)}
+.card-row .card-min{width:50px;font-family:'Spline Sans Mono',monospace;font-size:11px;border:1.5px solid rgba(206,17,38,.25);background:#fff;padding:3px 5px;text-align:center;color:var(--ink)}
+.card-row .card-type{font-family:'Spline Sans Mono',monospace;font-size:11px;border:1.5px solid rgba(206,17,38,.25);background:#fff;padding:3px 5px;color:var(--ink);cursor:pointer}
+.section-sep{font-family:'Spline Sans Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grey);margin-top:10px;margin-bottom:4px;padding-top:8px;border-top:1px dashed rgba(0,17,102,.12)}
 
 /* TABLERO EN VIVO */
 .live-board{background:var(--nodo);padding:20px 4vw 24px;border-bottom:4px solid var(--amarillo)}
@@ -242,8 +250,69 @@ window.removeGolRow = (btn, mid) => {
 };
 
 function triggerGolSave(mid) {
-  RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null, gol: '' };
+  RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null, gol: '', tar: '' };
   RESULTADOS[mid].gol = serializeGols(mid);
+  const card = document.getElementById('res-' + mid);
+  if (card) card.classList.add('saving');
+  clearTimeout(timers[mid]);
+  timers[mid] = setTimeout(() => saveResultado(mid), 800);
+}
+
+// ── TARJETAS HELPERS ───────────────────────────────
+function parseTarjetas(str) {
+  if (!str || !str.trim()) return [];
+  return str.split(' · ').map(s => {
+    s = s.trim();
+    let type = 'yellow';
+    if (s.startsWith('🟨🟥'))      { type = 'yr';     s = s.slice(4).trim(); }
+    else if (s.startsWith('🟥'))   { type = 'red';    s = s.slice(2).trim(); }
+    else if (s.startsWith('🟨'))   { type = 'yellow'; s = s.slice(2).trim(); }
+    const m = s.match(/\s(\d+)'$/);
+    const min = m ? m[1] : '';
+    const name = m ? s.slice(0, -m[0].length).trim() : s;
+    return { name, min, type };
+  }).filter(t => t.name);
+}
+
+function cardRowHtml(mid, t = {}) {
+  const name = (t.name || '').replace(/"/g, '&quot;');
+  const opt = v => `<option value="${v}" ${(t.type||'yellow')===v?'selected':''}>`
+  return `<div class="card-row">
+    <input class="card-name" type="text" placeholder="Jugador" value="${name}" data-m="${mid}" data-s="card-part">
+    <input class="card-min" type="number" min="1" max="130" placeholder="Min" value="${t.min||''}" data-m="${mid}" data-s="card-part">
+    <select class="card-type" data-m="${mid}" data-s="card-part">
+      ${opt('yellow')}🟨 Amarilla</option>
+      ${opt('red')}🟥 Roja</option>
+      ${opt('yr')}🟨🟥 2ª Amarilla</option>
+    </select>
+    <button class="gol-del" onclick="removeCardRow(this,${mid})">×</button>
+  </div>`;
+}
+
+function serializeTarjetas(mid) {
+  return Array.from(document.querySelectorAll(`#card-rows-${mid} .card-row`)).map(row => {
+    const name = row.querySelector('.card-name').value.trim();
+    if (!name) return null;
+    const min  = row.querySelector('.card-min').value;
+    const type = row.querySelector('.card-type').value;
+    const emoji = type === 'red' ? '🟥' : type === 'yr' ? '🟨🟥' : '🟨';
+    return `${emoji} ${name}${min ? ' '+min+"'" : ''}`;
+  }).filter(Boolean).join(' · ');
+}
+
+window.addCardRow = mid => {
+  const rows = document.getElementById('card-rows-' + mid);
+  if (rows) rows.insertAdjacentHTML('beforeend', cardRowHtml(mid));
+};
+
+window.removeCardRow = (btn, mid) => {
+  btn.closest('.card-row').remove();
+  triggerCardSave(mid);
+};
+
+function triggerCardSave(mid) {
+  RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null, gol: '', tar: '' };
+  RESULTADOS[mid].tar = serializeTarjetas(mid);
   const card = document.getElementById('res-' + mid);
   if (card) card.classList.add('saving');
   clearTimeout(timers[mid]);
@@ -292,7 +361,7 @@ async function init() {
   MATCHES = partidos || [];
   RESULTADOS = {};
   (resultados || []).forEach(r => {
-    RESULTADOS[r.partido_id] = { gl: r.goles_local, gv: r.goles_vis, gol: r.goleadores || '' };
+    RESULTADOS[r.partido_id] = { gl: r.goles_local, gv: r.goles_vis, gol: r.goleadores || '', tar: r.tarjetas || '' };
   });
 
   const etapas = [...new Set(MATCHES.map(m => m.etapa))];
@@ -345,10 +414,18 @@ function renderRes() {
         <div class="bt right"><span>${m.visitante}</span>${flag(m.codigo_vis, m.visitante)}</div>
       </div>
       <div class="gol-builder">
+        <div class="section-sep">⚽ Goles</div>
         <div class="gol-rows" id="gol-rows-${m.id}">
           ${parseGols(r.gol||'').map(g=>golRowHtml(m.id,g)).join('')}
         </div>
         <button class="btn-add-gol" onclick="addGolRow(${m.id})">+ Agregar gol</button>
+        <div class="section-sep">🟨 Tarjetas</div>
+        <div class="card-builder">
+          <div class="card-rows" id="card-rows-${m.id}">
+            ${parseTarjetas(r.tar||'').map(t=>cardRowHtml(m.id,t)).join('')}
+          </div>
+          <button class="btn-add-gol" onclick="addCardRow(${m.id})">+ Agregar tarjeta</button>
+        </div>
       </div>
     </div>`;
   }).join('') || '<div class="loading">Sin partidos en esta fase.</div>';
@@ -359,8 +436,9 @@ const timers = {};
 function onResInput(e) {
   const inp = e.target; if (!inp.dataset.m) return;
   const mid = +inp.dataset.m;
-  if (inp.dataset.s === 'gol-part') { triggerGolSave(mid); return; }
-  RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null, gol: '' };
+  if (inp.dataset.s === 'gol-part')  { triggerGolSave(mid);  return; }
+  if (inp.dataset.s === 'card-part') { triggerCardSave(mid); return; }
+  RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null, gol: '', tar: '' };
   RESULTADOS[mid][inp.dataset.s] = inp.value !== '' ? +inp.value : null;
   const card = document.getElementById('res-' + mid);
   if (card) card.classList.add('saving');
@@ -378,6 +456,7 @@ async function saveResultado(mid) {
     goles_local: r.gl,
     goles_vis: r.gv,
     goleadores: r.gol || '',
+    tarjetas:   r.tar || '',
     updated_at: new Date().toISOString()
   }, { onConflict: 'partido_id' });
   const card = document.getElementById('res-' + mid);

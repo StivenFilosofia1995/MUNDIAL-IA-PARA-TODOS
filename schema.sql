@@ -58,6 +58,8 @@ CREATE TABLE IF NOT EXISTS resultados (
 
 -- Agregar columna goleadores si ya existía la tabla sin ella
 ALTER TABLE resultados ADD COLUMN IF NOT EXISTS goleadores TEXT DEFAULT '';
+-- Tarjetas amarillas y rojas
+ALTER TABLE resultados ADD COLUMN IF NOT EXISTS tarjetas   TEXT DEFAULT '';
 
 CREATE TABLE IF NOT EXISTS asistencias (
   id         UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
