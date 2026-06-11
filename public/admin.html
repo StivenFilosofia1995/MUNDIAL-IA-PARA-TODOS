@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADMIN — Polla NODO 2026</title>
+<script src="/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600;700&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --nodo:#001166;--nodo-mid:#0022aa;--amarillo:#FCD116;--rojo:#CE1126;
+  --blanco:#ffffff;--paper:#f4f6fb;--card:#ffffff;--grey:#6b7280;--ink:#0a0e1a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:'Archivo',sans-serif}
+.tricolor{height:5px;background:linear-gradient(90deg,var(--amarillo) 0 40%,var(--nodo) 40% 70%,var(--rojo) 70% 100%)}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;z-index:100;background:var(--nodo);display:flex;align-items:center;justify-content:center}
+.login-box{text-align:center;padding:40px;border:3px solid var(--amarillo);box-shadow:8px 8px 0 rgba(0,0,0,.3);background:rgba(255,255,255,.05);max-width:360px;width:90%}
+.login-box .logo{font-family:'Archivo Black',sans-serif;font-size:28px;color:var(--blanco);letter-spacing:-.01em;margin-bottom:4px}
+.login-box .logo em{color:var(--amarillo);font-style:normal}
+.login-box .sub{font-family:'Spline Sans Mono',monospace;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.2em;text-transform:uppercase;margin-bottom:28px}
+.login-box .lock{font-size:36px;margin-bottom:16px}
+#passInput{font-family:monospace;font-size:15px;border:2px solid var(--amarillo);padding:12px 14px;background:rgba(255,255,255,.1);color:var(--blanco);width:100%;border-radius:2px;outline:none;margin-bottom:12px;letter-spacing:.05em}
+#passInput::placeholder{color:rgba(255,255,255,.3);letter-spacing:.02em}
+#btnLogin{font-family:'Spline Sans Mono',monospace;font-size:12px;font-weight:700;background:var(--amarillo);color:var(--nodo);border:none;padding:13px 16px;cursor:pointer;width:100%;text-transform:uppercase;letter-spacing:.1em;box-shadow:4px 4px 0 rgba(0,0,0,.2);transition:all .15s}
+#btnLogin:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 rgba(0,0,0,.25)}
+#loginError{color:#ffb3ba;font-family:monospace;font-size:11px;margin-top:12px;display:none;letter-spacing:.04em}
+.login-back{font-family:monospace;font-size:11px;color:rgba(255,255,255,.3);margin-top:20px;cursor:pointer;text-decoration:underline;display:block}
+.login-back:hover{color:rgba(255,255,255,.6)}
+
+/* HEADER */
+header{background:var(--nodo);color:var(--blanco);padding:14px 4vw;display:flex;align-items:center;gap:14px;border-bottom:4px solid var(--amarillo);flex-wrap:wrap}
+.nodo-icon{width:36px;height:36px;background:var(--blanco);border-radius:3px;display:flex;align-items:center;justify-content:center;flex:none}
+.nodo-icon svg{width:24px;height:24px}
+.head-title{font-family:'Archivo Black',sans-serif;font-size:clamp(16px,2.5vw,24px);color:var(--blanco);letter-spacing:-.01em}
+.head-title em{color:var(--amarillo);font-style:normal}
+.admin-badge{background:var(--rojo);color:var(--blanco);font-family:'Spline Sans Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;padding:3px 10px;border-radius:2px}
+.head-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{font-family:'Spline Sans Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border:2px solid var(--nodo);background:var(--card);color:var(--nodo);padding:8px 14px;cursor:pointer;box-shadow:3px 3px 0 var(--nodo);transition:all .1s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--nodo)}
+.btn.primary{background:var(--amarillo)}
+.btn.danger{background:var(--rojo);border-color:var(--rojo);color:var(--blanco);box-shadow:3px 3px 0 rgba(0,0,0,.3)}
+.btn.blue{background:var(--nodo);color:var(--blanco);border-color:var(--nodo-mid)}
+.btn.blue:hover{box-shadow:4px 4px 0 rgba(0,0,30,.4)}
+.btn-logout{font-family:'Spline Sans Mono',monospace;font-size:11px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.2);padding:7px 14px;cursor:pointer;border-radius:3px;transition:all .15s}
+.btn-logout:hover{background:rgba(255,255,255,.2)}
+
+/* TOOLBAR */
+.toolbar{background:var(--blanco);border-bottom:2px solid rgba(0,17,102,.1);padding:12px 4vw;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:10}
+.toolbar select{font-family:'Spline Sans Mono',monospace;font-size:11px;border:2px solid var(--nodo);padding:7px 10px;background:var(--card);color:var(--ink);border-radius:0;outline:none}
+.sync-status{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--grey);margin-left:auto}
+
+/* GRID */
+main{padding:20px 4vw 80px;max-width:1240px;margin:0 auto}
+h2{font-family:'Archivo Black',sans-serif;font-size:22px;color:var(--nodo);margin-bottom:4px}
+.note{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--grey);margin-bottom:16px;letter-spacing:.06em;text-transform:uppercase}
+.bets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.bet-card{background:var(--card);border:2px solid var(--nodo);box-shadow:3px 3px 0 var(--nodo);padding:14px}
+.bet-card.saved{border-left:5px solid #15803d}
+.bet-card.saving{border-color:var(--amarillo);box-shadow:3px 3px 0 var(--amarillo)}
+.bet-top{display:flex;justify-content:space-between;align-items:center;font-family:'Spline Sans Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--grey);margin-bottom:10px;gap:6px}
+.stage{background:var(--nodo);color:var(--blanco);padding:2px 7px;font-size:9px;flex:none}
+.bet-teams{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.bt{display:flex;align-items:center;gap:7px;font-weight:700;font-size:14px;min-width:0;flex:1}
+.bt span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt.right{flex-direction:row-reverse;text-align:right}
+.score-in{width:44px;text-align:center;font-family:'Archivo Black',sans-serif;font-size:20px;padding:5px 2px;border:2px solid var(--nodo);background:var(--paper);flex:none}
+.score-sep{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--grey);flex:none;padding:0 2px}
+.flag{width:28px;height:20px;object-fit:cover;border:1px solid rgba(0,17,102,.2);flex:none;border-radius:1px}
+.flag-tbd{width:28px;height:20px;border:1px dashed var(--grey);display:inline-flex;align-items:center;justify-content:center;font-size:7px;flex:none;background:#e8eaf0;color:var(--grey)}
+.gol-input{font-family:'Spline Sans Mono',monospace !important;font-size:11px !important;border:1.5px solid rgba(0,17,102,.25) !important;background:#f8f9ff !important;padding:6px 10px !important;width:100%;display:block;margin-top:8px}
+input[type="number"],input[type="text"]{font-family:'Spline Sans Mono',monospace;font-size:12px;border:2px solid var(--nodo);padding:8px 10px;background:var(--card);color:var(--ink);border-radius:0;outline:none}
+footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:14px 4vw;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.loading{text-align:center;padding:40px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--grey)}
+@keyframes livepulse{0%,100%{opacity:1}50%{opacity:.2}}
+</style>
+</head>
+<body>
+<div class="tricolor"></div>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="lock">🔐</div>
+    <div class="logo">POLLA <em>NODO</em></div>
+    <div class="sub">Panel de Administrador</div>
+    <input type="password" id="passInput" placeholder="Contraseña de acceso"
+      onkeypress="if(event.key==='Enter') doLogin()">
+    <button id="btnLogin" onclick="doLogin()">Acceder al panel</button>
+    <div id="loginError">Contraseña incorrecta — inténtalo de nuevo</div>
+    <a class="login-back" href="/polla.html">← Volver a La Polla</a>
+  </div>
+</div>
+
+<!-- PANEL ADMIN (oculto hasta login) -->
+<div id="admin-panel" style="display:none">
+  <header>
+    <div class="nodo-icon">
+      <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="30" height="30" fill="#001166" rx="2"/>
+        <path d="M6 22V8h3.6l8.4 9.6V8H22v14h-3.6L10 12.4V22H6z" fill="white"/>
+      </svg>
+    </div>
+    <span class="head-title">ADMIN <em>POLLA 2026</em></span>
+    <span class="admin-badge">🔒 Admin</span>
+    <div class="head-actions">
+      <a href="/polla.html" style="text-decoration:none"><button class="btn blue">← Ver La Polla</button></a>
+      <button class="btn-logout" onclick="doLogout()">Cerrar sesión admin</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <select id="resStage"><option value="">TODAS LAS FASES</option></select>
+    <button class="btn primary" id="btnSyncESPN" onclick="syncESPN()">🔄 Sincronizar ESPN</button>
+    <span class="sync-status" id="syncStatus">ESPN polling automático cada 60s</span>
+  </div>
+
+  <main>
+    <h2>Resultados oficiales</h2>
+    <p class="note">INGRESA MARCADOR Y GOLEADORES — SE GUARDA AUTOMÁTICO · BORRÓN EN ROJO POR SI TE EQUIVOCAS</p>
+    <div class="bets-grid" id="resGrid"><div class="loading">Cargando partidos…</div></div>
+  </main>
+
+  <footer>
+    <span>ADMIN PANEL · LA POLLA NODO · MUNDIAL 2026</span>
+    <span>SOLO USO INTERNO ☕</span>
+  </footer>
+</div>
+
+<script>
+const ADMIN_PASS = '854596+44';
+const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+const $ = id => document.getElementById(id);
+
+const DAYS = ['dom','lun','mar','mié','jue','vie','sáb'];
+const flag  = (c,l) => c ? `<img class="flag" src="https://flagcdn.com/w80/${c}.png" alt="${l}">` : `<div class="flag-tbd">${(l||'').slice(0,3)||'?'}</div>`;
+const fmtWhen = m => { const d=new Date(m.fecha+'T12:00:00-05:00'); return `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1} · ${m.hora}`; };
+
+// ── LOGIN ──────────────────────────────────────────
+function doLogin() {
+  const pass = $('passInput').value;
+  if (pass === ADMIN_PASS) {
+    sessionStorage.setItem('polla-admin', '1');
+    showPanel();
+  } else {
+    $('loginError').style.display = 'block';
+    $('passInput').value = '';
+    $('passInput').focus();
+    setTimeout(() => { $('loginError').style.display = 'none'; }, 3000);
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('polla-admin');
+  window.location.reload();
+}
+
+function showPanel() {
+  $('login-screen').style.display = 'none';
+  $('admin-panel').style.display = 'block';
+  init();
+}
+
+// Auto-login si ya está autenticado en esta sesión
+if (sessionStorage.getItem('polla-admin') === '1') {
+  showPanel();
+}
+
+// ── DATA ───────────────────────────────────────────
+let MATCHES = [], RESULTADOS = {};
+
+async function init() {
+  const [{ data: partidos }, { data: resultados }] = await Promise.all([
+    sb.from('partidos').select('*').order('fecha').order('hora'),
+    sb.from('resultados').select('*')
+  ]);
+
+  MATCHES = partidos || [];
+  RESULTADOS = {};
+  (resultados || []).forEach(r => {
+    RESULTADOS[r.partido_id] = { gl: r.goles_local, gv: r.goles_vis, gol: r.goleadores || '' };
+  });
+
+  const etapas = [...new Set(MATCHES.map(m => m.etapa))];
+  $('resStage').innerHTML = '<option value="">TODAS LAS FASES</option>' +
+    etapas.map(e => `<option value="${e}">${e.toUpperCase()}</option>`).join('');
+  $('resStage').onchange = renderRes;
+
+  renderRes();
+
+  // Realtime: actualizar cuando ESPN/alguien guarda un resultado
+  sb.channel('admin-resultados')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'resultados' }, payload => {
+      if (payload.new) {
+        RESULTADOS[payload.new.partido_id] = {
+          gl: payload.new.goles_local, gv: payload.new.goles_vis,
+          gol: payload.new.goleadores || ''
+        };
+        renderRes();
+      }
+      if (payload.eventType === 'DELETE') {
+        delete RESULTADOS[payload.old.partido_id];
+        renderRes();
+      }
+    })
+    .subscribe();
+}
+
+// ── RENDER ─────────────────────────────────────────
+function renderRes() {
+  const st = $('resStage').value;
+  const list = MATCHES.filter(m => !st || m.etapa === st);
+
+  $('resGrid').innerHTML = list.map(m => {
+    const r = RESULTADOS[m.id] || { gl: '', gv: '', gol: '' };
+    const saved = r.gl != null && r.gl !== '';
+    return `<div class="bet-card ${saved ? 'saved' : ''}" id="res-${m.id}">
+      <div class="bet-top">
+        <span class="stage">${m.etapa}</span>
+        <span>P${m.id} · ${fmtWhen(m)}</span>
+        ${saved ? `<button class="btn danger" style="font-size:9px;padding:2px 8px" onclick="borrar(${m.id})">🗑 Borrar</button>` : ''}
+      </div>
+      <div class="bet-teams">
+        <div class="bt">${flag(m.codigo_local, m.local)}<span>${m.local}</span></div>
+        <input class="score-in" type="number" min="0" max="20"
+          value="${r.gl != null && r.gl !== '' ? r.gl : ''}" data-m="${m.id}" data-s="gl">
+        <span class="score-sep">–</span>
+        <input class="score-in" type="number" min="0" max="20"
+          value="${r.gv != null && r.gv !== '' ? r.gv : ''}" data-m="${m.id}" data-s="gv">
+        <div class="bt right"><span>${m.visitante}</span>${flag(m.codigo_vis, m.visitante)}</div>
+      </div>
+      <input type="text" class="gol-input"
+        placeholder="⚽ Goleadores del partido (ej: Jugador1 23' · Jugador2 67')"
+        value="${(r.gol || '').replace(/"/g, '&quot;')}" data-m="${m.id}" data-s="gol">
+    </div>`;
+  }).join('') || '<div class="loading">Sin partidos en esta fase.</div>';
+}
+
+// ── SAVE (auto) ────────────────────────────────────
+const timers = {};
+$('resGrid').addEventListener('input', e => {
+  const inp = e.target; if (!inp.dataset.m) return;
+  const mid = +inp.dataset.m;
+  RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null, gol: '' };
+  if (inp.dataset.s === 'gol') {
+    RESULTADOS[mid].gol = inp.value;
+  } else {
+    RESULTADOS[mid][inp.dataset.s] = inp.value !== '' ? +inp.value : null;
+  }
+  const card = document.getElementById('res-' + mid);
+  if (card) card.classList.add('saving');
+  clearTimeout(timers[mid]);
+  timers[mid] = setTimeout(() => saveResultado(mid), 800);
+});
+
+async function saveResultado(mid) {
+  const r = RESULTADOS[mid];
+  if (r.gl == null || r.gv == null) return;
+  await sb.from('resultados').upsert({
+    partido_id: mid,
+    goles_local: r.gl,
+    goles_vis: r.gv,
+    goleadores: r.gol || '',
+    updated_at: new Date().toISOString()
+  }, { onConflict: 'partido_id' });
+  const card = document.getElementById('res-' + mid);
+  if (card) { card.classList.remove('saving'); card.classList.add('saved'); }
+}
+
+window.borrar = async (mid) => {
+  if (!confirm(`¿Borrar resultado del partido ${mid}?`)) return;
+  await sb.from('resultados').delete().eq('partido_id', mid);
+  delete RESULTADOS[mid];
+  renderRes();
+};
+
+// ── ESPN SYNC ──────────────────────────────────────
+window.syncESPN = async () => {
+  const btn = $('btnSyncESPN');
+  const status = $('syncStatus');
+  btn.textContent = '⏳ Sincronizando…'; btn.disabled = true;
+  try {
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const res = await fetch(`/api/sync-espn?date=${today}`);
+    const { updated = 0, error = null } = await res.json();
+    if (error) throw new Error(error);
+    const now = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    status.textContent = `✓ ${updated} actualizado${updated !== 1 ? 's' : ''} · ${now}`;
+    btn.textContent = `✓ ${updated} actualizados`;
+    setTimeout(() => { btn.textContent = '🔄 Sincronizar ESPN'; btn.disabled = false; }, 3000);
+    if (updated > 0) renderRes();
+  } catch (e) {
+    status.textContent = `✗ Error: ${e.message}`;
+    btn.textContent = '✗ Error'; btn.disabled = false;
+    setTimeout(() => { btn.textContent = '🔄 Sincronizar ESPN'; }, 3000);
+  }
+};
+</script>
+</body>
+</html>

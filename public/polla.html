@@ -133,16 +133,6 @@ tr.yo{background:#f0f3ff}
 .calc-chip{font-family:'Spline Sans Mono',monospace;font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600}
 .calc-chip.ok{background:#dcfce7;color:#15803d}
 .calc-chip.no{background:#f1f5f9;color:#94a3b8;text-decoration:line-through}
-/* ADMIN LOGIN MODAL */
-#modal-admin-login{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,30,.95);display:flex;align-items:center;justify-content:center}
-.admin-login-box{background:var(--nodo);color:var(--blanco);padding:40px;border:3px solid var(--amarillo);box-shadow:8px 8px 0 rgba(0,0,0,.3);text-align:center;max-width:340px}
-.admin-login-box h3{font-family:'Archivo Black',sans-serif;font-size:20px;margin-bottom:8px;letter-spacing:-.01em}
-.admin-login-box p{font-family:monospace;font-size:11px;color:rgba(255,255,255,.6);margin-bottom:20px;text-transform:uppercase;letter-spacing:.08em}
-#adminPassInput{font-family:monospace;font-size:14px;border:2px solid var(--amarillo);padding:10px 12px;background:rgba(255,255,255,.1);color:var(--blanco);width:100%;box-sizing:border-box;border-radius:2px;outline:none;margin-bottom:14px}
-#adminPassInput::placeholder{color:rgba(255,255,255,.3)}
-#btnAdminLogin{font-family:monospace;font-size:12px;font-weight:700;background:var(--amarillo);color:var(--nodo);border:2px solid var(--amarillo);padding:11px 16px;cursor:pointer;width:100%;text-transform:uppercase;letter-spacing:.08em;transition:all .15s;box-shadow:3px 3px 0 rgba(0,0,0,.2)}
-#btnAdminLogin:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 rgba(0,0,0,.2)}
-#adminError{color:#ffb3ba;font-family:monospace;font-size:10px;margin-top:10px;display:none}
 .warn{background:#fffbeb;border:2px solid var(--amarillo);padding:10px 14px;font-size:12px;margin:12px 0;color:var(--ink)}
 .loading{text-align:center;padding:40px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--grey)}
 footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
@@ -178,7 +168,6 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
   <button class="on" data-tab="apuestas">⚽ Apuestas</button>
   <button data-tab="tabla">🏆 Tabla</button>
   <button data-tab="colombia">🇨🇴 Colombia</button>
-  <button data-tab="resultados" id="navResultados" style="display:none">📋 Resultados</button>
   <button data-tab="integrantes">👥 Integrantes</button>
 </nav>
 
@@ -215,17 +204,6 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
   <div class="co-grid" id="coGrid"><div class="loading">Cargando…</div></div>
 </section>
 
-<!-- RESULTADOS (admin solo) -->
-<section class="tab" id="tab-resultados">
-  <h2>Resultados oficiales 🔒 ADMIN</h2>
-  <p class="note">SOLO ADMINISTRADOR — INGRESA MARCADOR Y GOLEADORES — SE GUARDA AUTOMÁTICO Y SE ACTUALIZA EN TIEMPO REAL PARA TODOS.</p>
-  <div class="row">
-    <select id="resStage"><option value="">TODAS LAS FASES</option></select>
-    <button class="btn blue" id="btnSyncESPN" onclick="syncESPN()" style="margin-left:auto">🔄 Sincronizar con ESPN</button>
-  </div>
-  <div class="bets-grid" id="resGrid"><div class="loading">Cargando…</div></div>
-</section>
-
 <!-- INTEGRANTES -->
 <section class="tab" id="tab-integrantes">
   <h2>Integrantes</h2>
@@ -246,17 +224,6 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
   </div>
 </div>
 
-<!-- MODAL ADMIN LOGIN -->
-<div id="modal-admin-login">
-  <div class="admin-login-box">
-    <h3>🔐 Acceso Admin</h3>
-    <p>Ingresa la contraseña para editar resultados</p>
-    <input type="password" id="adminPassInput" placeholder="Contraseña" onkeypress="if(event.key==='Enter') verifyAdminPass()">
-    <button id="btnAdminLogin" onclick="verifyAdminPass()">Acceder</button>
-    <div id="adminError">Contraseña incorrecta</div>
-  </div>
-</div>
-
 <footer>
   <span>LA POLLA NODO · MUNDIAL 2026 · UNIVERSIDAD EAFIT</span>
   <span>HECHO EN LA OFICINA ☕</span>
@@ -266,9 +233,6 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
 const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 const sesion = JSON.parse(localStorage.getItem('polla-sesion') || 'null');
 if (!sesion) { window.location.href = '/'; }
-
-const adminPass = localStorage.getItem('polla-admin-pass');
-const isAdmin = adminPass === 'e8e5c1e8e7c2c1e8e5c1e8e7c2c1e8e5c1e8e7c2c1e8e5c1e8e7c2c1e8e5c1'; // hash simple de contraseña
 
 document.getElementById('userChip').style.display = 'flex';
 document.getElementById('userLabel').textContent = sesion.nombre + ' ' + sesion.apellido;
@@ -350,71 +314,6 @@ function downloadIcs(m) {
 }
 window.downloadIcs = downloadIcs;
 
-// ── ADMIN PASSWORD VERIFICATION ────────────────────
-function hashPass(p) {
-  let h = 0;
-  for (let i = 0; i < p.length; i++) {
-    h = ((h << 5) - h) + p.charCodeAt(i);
-    h = h & h;
-  }
-  return 'e8e5c1e8e7c2c1e8e5c1e8e7c2c1e8e5c1e8e7c2c1e8e5c1e8e7c2c1e8e5c1';
-}
-
-window.verifyAdminPass = () => {
-  const pass = $('adminPassInput').value;
-  const correct = '854596+44';
-  if (pass === correct) {
-    localStorage.setItem('polla-admin-pass', correct);
-    $('modal-admin-login').style.display = 'none';
-    $('navResultados').style.display = 'block';
-    $('adminPassInput').value = '';
-    $('adminError').style.display = 'none';
-  } else {
-    $('adminError').style.display = 'block';
-    $('adminPassInput').value = '';
-  }
-};
-
-// Mostrar modal si no es admin
-if (!adminPass) {
-  document.addEventListener('DOMContentLoaded', () => {
-    // Pero permitir que vea otros tabs
-    const adminNav = document.querySelector('[data-tab="resultados"]');
-    if (adminNav) adminNav.style.display = 'none';
-  });
-  // Mostrar modal cuando intente acceder a resultados
-  document.querySelectorAll('nav button').forEach(b => {
-    b.addEventListener('click', () => {
-      if (b.dataset.tab === 'resultados' && !adminPass) {
-        $('modal-admin-login').style.display = 'flex';
-        $('adminPassInput').focus();
-      }
-    });
-  });
-}
-
-// ── SINCRONIZAR CON ESPN ───────────────────────────
-window.syncESPN = async () => {
-  const btn = $('btnSyncESPN');
-  const orig = btn.textContent;
-  btn.textContent = '⏳ Sincronizando…'; btn.disabled = true;
-  try {
-    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const res = await fetch(`/api/sync-espn?date=${today}`);
-    const { updated = 0, error = null } = await res.json();
-    if (error) throw new Error(error);
-    btn.textContent = `✓ ${updated} actualizado${updated !== 1 ? 's' : ''}`;
-    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 3000);
-    // Recargar resultados
-    if (document.querySelector('[data-tab="resultados"].on')) renderRes();
-    renderBets();
-  } catch (e) {
-    btn.textContent = '✗ Error'; btn.disabled = false;
-    console.error('syncESPN:', e);
-    setTimeout(() => { btn.textContent = orig; }, 3000);
-  }
-};
-
 // ── INIT ────────────────────────────────────────────
 async function init() {
   const [{ data: partidos },{ data: resultados },{ data: apuestas }] = await Promise.all([
@@ -430,10 +329,8 @@ async function init() {
   (apuestas||[]).forEach(a => { APUESTAS_CACHE[a.partido_id] = { gl: a.goles_local, gv: a.goles_vis }; });
 
   const etapas = [...new Set(MATCHES.map(m => m.etapa))];
-  for (const sel of [$('betStage'), $('resStage')]) {
-    sel.innerHTML = '<option value="">TODAS LAS FASES</option>' +
-      etapas.map(e => `<option value="${e}">${e.toUpperCase()}</option>`).join('');
-  }
+  $('betStage').innerHTML = '<option value="">TODAS LAS FASES</option>' +
+    etapas.map(e => `<option value="${e}">${e.toUpperCase()}</option>`).join('');
   renderBets();
 }
 
@@ -551,79 +448,6 @@ window.saveAllApuestas = async () => {
   }
 };
 
-// ── RESULTADOS (admin) ──────────────────────────────
-function renderRes() {
-  const st = $('resStage').value;
-  const list = MATCHES.filter(m => !st || m.etapa === st);
-  $('resGrid').innerHTML = list.map(m => {
-    const r = RESULTADOS[m.id] || { gl: '', gv: '', gol: '' };
-    const yaGuardado = r.gl != null && r.gv != null;
-    return `<div class="bet-card" id="res-card-${m.id}" style="${yaGuardado?'border-left:4px solid #15803d':''}">
-      <div class="bet-top">
-        <span class="stage">${m.etapa}</span>
-        <span>P${m.id} · ${fmtWhen(m)}</span>
-        ${yaGuardado?`<button class="btn danger" style="font-size:9px;padding:2px 8px;margin-left:auto" onclick="borrarResultado(${m.id})">🗑 Borrar</button>`:''}
-      </div>
-      <div class="bet-teams">
-        <div class="bt">${flag(m.codigo_local,m.local)}<span>${m.local}</span></div>
-        <input class="score-in" type="number" min="0" max="20"
-          value="${r.gl!=null&&r.gl!==''?r.gl:''}" data-m="${m.id}" data-s="gl">
-        <span class="score-sep">–</span>
-        <input class="score-in" type="number" min="0" max="20"
-          value="${r.gv!=null&&r.gv!==''?r.gv:''}" data-m="${m.id}" data-s="gv">
-        <div class="bt right"><span>${m.visitante}</span>${flag(m.codigo_vis,m.visitante)}</div>
-      </div>
-      <input type="text" class="gol-input" placeholder="⚽ Goleadores del partido (ej: Jugador1 23' · Jugador2 67')"
-        value="${(r.gol||'').replace(/"/g,'&quot;')}" data-m="${m.id}" data-s="gol">
-    </div>`;
-  }).join('');
-}
-
-const resTimers = {};
-$('resGrid').addEventListener('input', e => {
-  const inp = e.target; if (!inp.dataset.m) return;
-  const mid = +inp.dataset.m;
-  RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null, gol: '' };
-  if (inp.dataset.s === 'gol') {
-    RESULTADOS[mid].gol = inp.value;
-  } else {
-    RESULTADOS[mid][inp.dataset.s] = inp.value !== '' ? +inp.value : null;
-  }
-  clearTimeout(resTimers[mid]);
-  resTimers[mid] = setTimeout(() => saveResultado(mid), 800);
-});
-
-async function saveResultado(mid) {
-  const r = RESULTADOS[mid];
-  if (r.gl == null || r.gv == null) return;
-  await sb.from('resultados').upsert({
-    partido_id: mid, goles_local: r.gl, goles_vis: r.gv,
-    goleadores: r.gol || '',
-    updated_at: new Date().toISOString()
-  }, { onConflict: 'partido_id' });
-}
-$('resStage').onchange = renderRes;
-
-window.saveAllResultados = async () => {
-  // Flush all pending timers
-  const mids = Object.keys(resTimers).map(Number);
-  for (const mid of mids) { clearTimeout(resTimers[mid]); delete resTimers[mid]; }
-  // Save anything with values
-  const jobs = Object.entries(RESULTADOS)
-    .filter(([,r]) => r.gl != null && r.gv != null)
-    .map(([mid]) => saveResultado(+mid));
-  await Promise.all(jobs);
-  renderRes();
-};
-
-window.borrarResultado = async (mid) => {
-  if (!confirm('¿Borrar el resultado del partido ' + mid + '? Esto quitará los puntos calculados para ese partido.')) return;
-  await sb.from('resultados').delete().eq('partido_id', mid);
-  delete RESULTADOS[mid];
-  renderRes();
-  renderBets();
-};
-
 // ── TABLA ──────────────────────────────────────────
 async function renderBoard() {
   const { data } = await sb.from('v_tabla').select('*');
@@ -713,7 +537,6 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
   const t = b.dataset.tab;
   if      (t==='tabla')       renderBoard();
   else if (t==='colombia')    renderCo();
-  else if (t==='resultados')  renderRes();
   else if (t==='integrantes') renderMembers();
   else                        renderBets();
 });

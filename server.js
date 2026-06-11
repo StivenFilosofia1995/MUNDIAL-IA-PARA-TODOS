@@ -73,6 +73,7 @@ app.get('/api/sync-espn', async (req, res) => {
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.listen(PORT, () => console.log(`Polla NODO corriendo en :${PORT}`));
 
