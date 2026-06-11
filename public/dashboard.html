@@ -145,6 +145,7 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:14px 5vw;font-f
   <input id="searchBox" type="text" placeholder="Buscar equipo, ciudad…">
   <button class="btn co" id="btnCo">🇨🇴 Colombia</button>
   <button class="btn" id="btnUpcoming">Solo pendientes</button>
+  <button class="btn" id="btnRefresh" onclick="pollLive()" title="Forzar actualización de marcadores">⟳ EN VIVO</button>
 </div>
 
 <main>
@@ -399,13 +400,33 @@ function renderAll() {
   else if (active==='calendario') renderCalendar();
 }
 
-// Realtime
+// Realtime (WebSocket Supabase)
 sb.channel('dash-live')
   .on('postgres_changes', { event: '*', schema: 'public', table: 'resultados' }, payload => {
     if (payload.new) RESULTADOS[payload.new.partido_id] = { gl: payload.new.goles_local, gv: payload.new.goles_vis, gol: payload.new.goleadores||'' };
     renderAll();
   })
   .subscribe();
+
+// Polling directo al servidor cada 30s — redundancia si Realtime falla o ESPN tarda
+async function pollLive() {
+  try {
+    const r = await fetch('/api/live');
+    if (!r.ok) return;
+    const { resultados = [] } = await r.json();
+    let changed = false;
+    resultados.forEach(row => {
+      const cur = RESULTADOS[row.partido_id];
+      const gl = row.goles_local, gv = row.goles_vis, gol = row.goleadores || '';
+      if (!cur || cur.gl !== gl || cur.gv !== gv || cur.gol !== gol) {
+        RESULTADOS[row.partido_id] = { gl, gv, gol };
+        changed = true;
+      }
+    });
+    if (changed) renderAll();
+  } catch {}
+}
+setInterval(pollLive, 30_000);
 
 init();
 </script>

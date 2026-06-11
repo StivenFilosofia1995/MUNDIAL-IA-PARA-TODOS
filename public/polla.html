@@ -723,6 +723,30 @@ sb.channel('resultados-live')
   })
   .subscribe();
 
+// Polling directo al servidor cada 30s — redundancia si Realtime falla o ESPN tarda
+async function pollLive() {
+  try {
+    const r = await fetch('/api/live');
+    if (!r.ok) return;
+    const { resultados = [] } = await r.json();
+    let changed = false;
+    resultados.forEach(row => {
+      const cur = RESULTADOS[row.partido_id];
+      const gl = row.goles_local, gv = row.goles_vis, gol = row.goleadores || '';
+      if (!cur || cur.gl !== gl || cur.gv !== gv || cur.gol !== gol) {
+        RESULTADOS[row.partido_id] = { gl, gv, gol };
+        changed = true;
+      }
+    });
+    if (changed) {
+      if (document.querySelector('[data-tab="apuestas"].on')) renderBets();
+      if (document.querySelector('[data-tab="resultados"].on')) renderRes();
+      renderBoard();
+    }
+  } catch {}
+}
+setInterval(pollLive, 30_000);
+
 // Quitar badge al abrir la tabla
 document.querySelector('[data-tab="tabla"]').addEventListener('click', () => {
   const b = document.querySelector('[data-tab="tabla"] .badge');

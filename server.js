@@ -72,6 +72,12 @@ app.get('/api/sync-espn', async (req, res) => {
   }
 });
 
+// ── API: marcadores en vivo (polling de clientes) ───────────────
+app.get('/api/live', async (req, res) => {
+  const data = await sbRest('/resultados?select=partido_id,goles_local,goles_vis,goleadores,updated_at');
+  res.json({ ok: true, ts: Date.now(), resultados: data || [] });
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
@@ -141,20 +147,26 @@ async function upsertResultado(pid, gl, gv, goleadores) {
 }
 
 // ── ESPN FREE API (sin clave, automático) ────────────────────────
-// Fuente: ESPN scores API para FIFA World Cup — funciona sin registro
+// Fecha en hora Colombia (UTC-5) para no pedir el día equivocado
+const todayESPN = () => new Date(Date.now() - 5*60*60*1000).toISOString().slice(0,10).replace(/-/g,'');
+
+let liveActive = false; // Hay partidos en vivo ahora mismo
+
 async function pollESPN() {
   try {
-    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const today = todayESPN();
     const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${today}`;
     const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
     if (!res.ok) { console.error('[espn]', res.status); return; }
     const { events = [] } = await res.json();
 
     let updated = 0;
+    let hasLive = false;
     for (const ev of events) {
       const comp   = ev.competitions?.[0];
       if (!comp) continue;
       const status = ev.status?.type?.name || '';
+      if (status === 'STATUS_IN_PROGRESS' || status === 'STATUS_HALFTIME') hasLive = true;
       if (!['STATUS_IN_PROGRESS','STATUS_HALFTIME','STATUS_FINAL','STATUS_FULL_TIME'].includes(status)) continue;
 
       const home = comp.competitors?.find(c => c.homeAway === 'home');
@@ -169,7 +181,7 @@ async function pollESPN() {
       if (!homeEs || !awayEs) continue;
 
       const pid = await findPartidoId(homeEs, awayEs);
-      if (!pid) { console.log('[espn] no mapeado:', homeEs, 'vs', awayEs); continue; }
+      if (!pid) { console.log('[espn] no mapeado:', homeEs, 'vs', awayEs, '| ESPN raw:', home.team?.displayName, 'vs', away.team?.displayName); continue; }
 
       // Goleadores desde ESPN details
       const goals = (comp.details || [])
@@ -186,7 +198,9 @@ async function pollESPN() {
       console.log(`[espn] ${homeEs} ${gl}–${gv} ${awayEs}${goals.length ? ' | '+goals.join(', ') : ''}`);
       updated++;
     }
+    liveActive = hasLive;
     if (updated) console.log(`[espn] ${updated} partidos actualizados`);
+    else if (events.length) console.log(`[espn] ${events.length} eventos hoy, ninguno actualizado (fechaESPN=${today})`);
   } catch (e) {
     console.error('[espn]', e.message);
   }
@@ -227,16 +241,21 @@ async function pollFootballData() {
   }
 }
 
-// ── Iniciar polling ──────────────────────────────────────────────
+// ── Iniciar polling adaptivo ──────────────────────────────────────
+// En vivo: 20s · Normal: 60s (más rápido cuando hay partido activo)
 if (SUPABASE_URL && SUPABASE_ANON) {
   if (FOOTBALL_API_KEY) {
     console.log('[live] football-data.org activo (clave configurada)');
     pollFootballData();
-    setInterval(pollFootballData, 60_000);
+    setInterval(pollFootballData, 45_000);
   } else {
-    console.log('[live] ESPN free API activo (automático, sin clave)');
-    pollESPN();
-    setInterval(pollESPN, 60_000);
+    console.log('[live] ESPN free API — polling adaptivo (20s en vivo, 60s idle)');
+    let pollTimer;
+    async function scheduleESPN() {
+      await pollESPN();
+      pollTimer = setTimeout(scheduleESPN, liveActive ? 20_000 : 60_000);
+    }
+    scheduleESPN();
   }
 } else {
   console.log('[live] Sin Supabase — modo offline');
