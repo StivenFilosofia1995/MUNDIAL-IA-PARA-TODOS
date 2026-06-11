@@ -76,7 +76,16 @@ input[type="number"],input[type="text"]{font-family:'Spline Sans Mono',monospace
 footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:14px 4vw;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .loading{text-align:center;padding:40px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--grey)}
 @keyframes livepulse{0%,100%{opacity:1}50%{opacity:.2}}
-
+/* GOLEADORES BUILDER */
+.gol-builder{margin-top:8px}
+.gol-rows{display:flex;flex-direction:column;gap:5px}
+.gol-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;background:#f0f4ff;border:1px solid rgba(0,17,102,.12);padding:5px 7px}
+.gol-row .gol-name{flex:1;min-width:110px;font-family:'Spline Sans Mono',monospace;font-size:11px;border:1.5px solid rgba(0,17,102,.25);background:#fff;padding:3px 7px;color:var(--ink)}
+.gol-row .gol-min{width:50px;font-family:'Spline Sans Mono',monospace;font-size:11px;border:1.5px solid rgba(0,17,102,.25);background:#fff;padding:3px 5px;text-align:center;color:var(--ink)}
+.gol-chk{font-family:'Spline Sans Mono',monospace;font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;color:#374151}
+.gol-del{background:none;border:none;color:var(--rojo);cursor:pointer;font-size:16px;font-weight:700;line-height:1;padding:0 4px;flex:none}
+.btn-add-gol{font-family:'Spline Sans Mono',monospace;font-size:10px;font-weight:700;border:1.5px dashed rgba(0,17,102,.35);background:transparent;color:var(--nodo);padding:4px 10px;cursor:pointer;margin-top:5px;letter-spacing:.05em;width:100%}
+.btn-add-gol:hover{background:#f0f4ff}
 
 /* TABLERO EN VIVO */
 .live-board{background:var(--nodo);padding:20px 4vw 24px;border-bottom:4px solid var(--amarillo)}
@@ -186,6 +195,61 @@ const todayCOL = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Ameri
 
 const fmtWhen = m => { const d=new Date(m.fecha+'T12:00:00-05:00'); return `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1} · ${m.hora}`; };
 
+// ── GOLEADORES HELPERS ─────────────────────────────
+function parseGols(str) {
+  if (!str || !str.trim()) return [];
+  return str.split(' · ').map(s => {
+    const pen = s.includes('(pen)');
+    const og  = s.includes('(pp)');
+    s = s.replace(' (pen)', '').replace(' (pp)', '').trim();
+    const m = s.match(/\s(\d+)'$/);
+    const min = m ? m[1] : '';
+    const name = m ? s.slice(0, -m[0].length).trim() : s;
+    return { name, min, pen, og };
+  }).filter(g => g.name);
+}
+
+function golRowHtml(mid, g = {}) {
+  const name = (g.name || '').replace(/"/g, '&quot;');
+  return `<div class="gol-row">
+    <input class="gol-name" type="text" placeholder="Jugador" value="${name}" data-m="${mid}" data-s="gol-part">
+    <input class="gol-min" type="number" min="1" max="130" placeholder="Min" value="${g.min||''}" data-m="${mid}" data-s="gol-part">
+    <label class="gol-chk"><input type="checkbox" class="gol-pen" ${g.pen?'checked':''} data-m="${mid}" data-s="gol-part"> Pen</label>
+    <label class="gol-chk"><input type="checkbox" class="gol-og" ${g.og?'checked':''} data-m="${mid}" data-s="gol-part"> PP</label>
+    <button class="gol-del" onclick="removeGolRow(this,${mid})">×</button>
+  </div>`;
+}
+
+function serializeGols(mid) {
+  return Array.from(document.querySelectorAll(`#gol-rows-${mid} .gol-row`)).map(row => {
+    const name = row.querySelector('.gol-name').value.trim();
+    if (!name) return null;
+    const min = row.querySelector('.gol-min').value;
+    const pen = row.querySelector('.gol-pen').checked;
+    const og  = row.querySelector('.gol-og').checked;
+    return `${name}${min ? " "+min+"'" : ''}${pen ? ' (pen)' : ''}${og ? ' (pp)' : ''}`;
+  }).filter(Boolean).join(' · ');
+}
+
+window.addGolRow = mid => {
+  const rows = document.getElementById('gol-rows-' + mid);
+  if (rows) { rows.insertAdjacentHTML('beforeend', golRowHtml(mid)); }
+};
+
+window.removeGolRow = (btn, mid) => {
+  btn.closest('.gol-row').remove();
+  triggerGolSave(mid);
+};
+
+function triggerGolSave(mid) {
+  RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null, gol: '' };
+  RESULTADOS[mid].gol = serializeGols(mid);
+  const card = document.getElementById('res-' + mid);
+  if (card) card.classList.add('saving');
+  clearTimeout(timers[mid]);
+  timers[mid] = setTimeout(() => saveResultado(mid), 800);
+}
+
 // ── LOGIN ──────────────────────────────────────────
 function doLogin() {
   const pass = $('passInput').value;
@@ -280,29 +344,31 @@ function renderRes() {
           value="${r.gv != null && r.gv !== '' ? r.gv : ''}" data-m="${m.id}" data-s="gv">
         <div class="bt right"><span>${m.visitante}</span>${flag(m.codigo_vis, m.visitante)}</div>
       </div>
-      <input type="text" class="gol-input"
-        placeholder="⚽ Goleadores del partido (ej: Jugador1 23' · Jugador2 67')"
-        value="${(r.gol || '').replace(/"/g, '&quot;')}" data-m="${m.id}" data-s="gol">
+      <div class="gol-builder">
+        <div class="gol-rows" id="gol-rows-${m.id}">
+          ${parseGols(r.gol||'').map(g=>golRowHtml(m.id,g)).join('')}
+        </div>
+        <button class="btn-add-gol" onclick="addGolRow(${m.id})">+ Agregar gol</button>
+      </div>
     </div>`;
   }).join('') || '<div class="loading">Sin partidos en esta fase.</div>';
 }
 
 // ── SAVE (auto) ────────────────────────────────────
 const timers = {};
-$('resGrid').addEventListener('input', e => {
+function onResInput(e) {
   const inp = e.target; if (!inp.dataset.m) return;
   const mid = +inp.dataset.m;
+  if (inp.dataset.s === 'gol-part') { triggerGolSave(mid); return; }
   RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null, gol: '' };
-  if (inp.dataset.s === 'gol') {
-    RESULTADOS[mid].gol = inp.value;
-  } else {
-    RESULTADOS[mid][inp.dataset.s] = inp.value !== '' ? +inp.value : null;
-  }
+  RESULTADOS[mid][inp.dataset.s] = inp.value !== '' ? +inp.value : null;
   const card = document.getElementById('res-' + mid);
   if (card) card.classList.add('saving');
   clearTimeout(timers[mid]);
   timers[mid] = setTimeout(() => saveResultado(mid), 800);
-});
+}
+$('resGrid').addEventListener('input',  onResInput);
+$('resGrid').addEventListener('change', onResInput);
 
 async function saveResultado(mid) {
   const r = RESULTADOS[mid];

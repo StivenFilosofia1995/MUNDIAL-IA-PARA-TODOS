@@ -316,7 +316,7 @@ function buildResultBar(bet, res, localName, visName) {
     <div class="res-official">
       Tu apuesta: <b>${bet.gl}–${bet.gv}</b>
       &nbsp;·&nbsp; Oficial: <b>${res.gl}–${res.gv}</b>
-      ${res.gol && res.gol.trim() ? `&nbsp;·&nbsp; ⚽ ${res.gol}` : ''}
+      ${res.gol && res.gol.trim() ? `<br>${res.gol.split(' · ').map(g=>`⚽ ${g}`).join('<br>')}` : ''}
     </div>`;
 }
 
@@ -583,7 +583,7 @@ function renderRes() {
         </div>
         <div class="bt right"><span>${m.visitante}</span>${flag(m.codigo_vis,m.visitante)}</div>
       </div>
-      ${r && r.gol && r.gol.trim() ? `<div class="goleadores-row">⚽ ${r.gol}</div>` : ''}
+      ${r && r.gol && r.gol.trim() ? `<div class="goleadores-row">${r.gol.split(' · ').map(g=>`<div>⚽ ${g}</div>`).join('')}</div>` : ''}
       ${live ? '<div class="live-strip"></div>' : ''}
     </div>`;
   };

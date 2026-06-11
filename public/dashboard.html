@@ -265,7 +265,7 @@ function resCard(m) {
       ${scoreHtml}
       <div class="r-team right"><span>${m.visitante}</span>${flag(m.codigo_vis,m.visitante)}</div>
     </div>
-    ${r&&r.gol?`<div class="goleadores-dash">⚽ ${r.gol}</div>`:''}
+    ${r&&r.gol?`<div class="goleadores-dash">${r.gol.split(' · ').map(g=>`<div>⚽ ${g}</div>`).join('')}</div>`:''}
     ${!r?`<div style="text-align:center;margin-top:10px"><button class="ics-btn" onclick="downloadIcs(${m.id})">📆 Agendar partido</button></div>`:''}
   </div>`;
 }
@@ -373,7 +373,7 @@ function renderCalendar() {
           <div class="team-line">${flag(m.codigo_local,m.local)} ${m.local}</div>
           <div class="team-line">${flag(m.codigo_vis,m.visitante)} ${m.visitante}</div>
           <div class="venue">${m.estadio} · ${m.ciudad}</div>
-          ${res&&res.gol?`<div style="font-family:monospace;font-size:9px;color:#374151;margin-top:3px">⚽ ${res.gol}</div>`:''}
+          ${res&&res.gol?`<div style="font-family:monospace;font-size:9px;color:#374151;margin-top:3px">${res.gol.split(' · ').map(g=>`<div>⚽ ${g}</div>`).join('')}</div>`:''}
         </div>
         <div class="stage-col">
           <span class="stage-badge ${col?'co':''}">${m.etapa}</span>
