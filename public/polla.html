@@ -119,6 +119,20 @@ tr.yo{background:#f0f3ff}
 /* INTEGRANTES */
 .member-card{background:var(--card);border:2px solid var(--nodo);padding:14px 16px;box-shadow:3px 3px 0 var(--nodo);display:flex;align-items:center;gap:12px}
 .member-avatar{width:36px;height:36px;background:var(--nodo);color:var(--blanco);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Archivo Black',sans-serif;font-size:14px;flex:none}
+.member-card{cursor:pointer}
+.member-card:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--nodo)}
+/* MODAL */
+#modal-member{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,30,.78);overflow-y:auto;padding:20px}
+.modal-box{max-width:960px;margin:0 auto;background:var(--paper);border:3px solid var(--nodo);box-shadow:8px 8px 0 var(--amarillo)}
+.modal-head{background:var(--nodo);color:var(--blanco);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.modal-close{background:transparent;border:2px solid rgba(255,255,255,.3);color:var(--blanco);font-size:16px;cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:2px;transition:all .15s;flex:none}
+.modal-close:hover{border-color:var(--amarillo);color:var(--amarillo)}
+.modal-body{padding:16px}
+/* CALCULADORA */
+.calc-row{display:flex;flex-wrap:wrap;gap:4px;padding:5px 10px 8px;background:rgba(0,17,102,.03);border-top:1px solid rgba(0,17,102,.07)}
+.calc-chip{font-family:'Spline Sans Mono',monospace;font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600}
+.calc-chip.ok{background:#dcfce7;color:#15803d}
+.calc-chip.no{background:#f1f5f9;color:#94a3b8;text-decoration:line-through}
 .warn{background:#fffbeb;border:2px solid var(--amarillo);padding:10px 14px;font-size:12px;margin:12px 0;color:var(--ink)}
 .loading{text-align:center;padding:40px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--grey)}
 footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
@@ -142,7 +156,7 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
   </div>
   <span class="head-title">LA <em>POLLA</em> 2026</span>
   <div class="head-meta">
-    104 PARTIDOS · <b>EXACTO 3 PTS → $1.500</b> · <b>ACIERTO 1 PT → $500</b><br>HORA COLOMBIANA (UTC–5)
+    104 PARTIDOS · <b>EXACTO $2.500</b> · <b>ACIERTO $500+</b> · <b>GOL +$500</b><br>HORA COLOMBIANA (UTC–5)
   </div>
   <div id="userChip" class="user-chip" style="display:none">
     <span class="user-name" id="userLabel">…</span>
@@ -163,7 +177,7 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
 <!-- APUESTAS: los 104 partidos -->
 <section class="tab on" id="tab-apuestas">
   <h2>Mis apuestas</h2>
-  <p class="note">EXACTO 3 PTS ($1.500 COP) · ACIERTO 1 PT ($500 COP) · SE GUARDAN AUTOMÁTICO · SE BLOQUEAN AL INICIO.</p>
+  <p class="note">EXACTO 3 PTS · ACIERTO 1 PT · +$500 GOL ADIVINADO (L/V) · EXACTO = $2.500 MÁX · SE GUARDAN AUTOMÁTICO · SE BLOQUEAN AL INICIO.</p>
   <div class="row">
     <select id="betStage"><option value="">TODAS LAS FASES</option></select>
     <button class="btn blue" onclick="location.href='/dashboard.html'">📅 Calendario</button>
@@ -174,7 +188,7 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
 <!-- TABLA -->
 <section class="tab" id="tab-tabla">
   <h2>Tabla de posiciones</h2>
-  <p class="note">EXACTO 3 PTS = $1.500 · ACIERTO 1 PT = $500 · TABLA EN TIEMPO REAL PARA TODOS.</p>
+  <p class="note">EXACTO = $2.500 · ACIERTO = $500+ · +$500 POR GOL ADIVINADO (LOCAL/VISITANTE) · TABLA EN TIEMPO REAL PARA TODOS.</p>
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;font-family:monospace;font-size:11px;color:var(--grey)">
     <span style="width:8px;height:8px;background:var(--rojo);border-radius:50%;display:inline-block;animation:livepulse 1.4s infinite"></span>
     EN VIVO — la tabla se actualiza en tiempo real para todos
@@ -209,6 +223,18 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
 </section>
 
 </main>
+
+<!-- ── MODAL: apuestas de un integrante ── -->
+<div id="modal-member">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span style="font-family:'Archivo Black',sans-serif;font-size:16px;letter-spacing:-.01em" id="modal-member-title">—</span>
+      <button class="modal-close" onclick="closeMemberModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-member-body"></div>
+  </div>
+</div>
+
 <footer>
   <span>LA POLLA NODO · MUNDIAL 2026 · UNIVERSIDAD EAFIT</span>
   <span>HECHO EN LA OFICINA ☕</span>
@@ -239,6 +265,51 @@ function points(bet, res) {
   if (bh===rh&&ba===ra) return 3;
   if (Math.sign(bh-ba)===Math.sign(rh-ra)) return 1;
   return 0;
+}
+
+function calcPesos(bet, res) {
+  if (!bet||!res||bet.gl==null||bet.gv==null||res.gl==null||res.gv==null) return null;
+  const bh=+bet.gl,ba=+bet.gv,rh=+res.gl,ra=+res.gv;
+  const resultOk = Math.sign(bh-ba)===Math.sign(rh-ra);
+  const exacto   = bh===rh && ba===ra;
+  const localOk  = bh===rh;
+  const visOk    = ba===ra;
+  let pesos = 0;
+  if (resultOk) pesos += 500;
+  if (exacto)   pesos += 1000;
+  if (localOk)  pesos += 500;
+  if (visOk)    pesos += 500;
+  return { pesos, resultOk, exacto, localOk, visOk };
+}
+
+function buildResultBar(bet, res, localName, visName) {
+  if (!bet||bet.gl==null||bet.gv==null) return '<div style="padding:5px 10px;font-size:9px;font-family:monospace;color:var(--grey)">— Sin apuesta</div>';
+  if (!res) return `<div style="padding:5px 10px;font-family:monospace;font-size:10px;color:var(--nodo);font-weight:600">⏱ Pendiente · Apuesta: <b>${bet.gl}–${bet.gv}</b></div>`;
+  const p  = points(bet, res);
+  const cp = calcPesos(bet, res);
+  if (!cp) return '';
+  const pLabel = p===3 ? '⭐ EXACTO' : p===1 ? '✓ ACIERTO' : '✗ FALLADO';
+  const cls    = p===3 ? 'exacto'   : p===1 ? 'acierto'   : 'fallado';
+  const ln = (localName||'L').split(' ')[0].slice(0,8);
+  const vn = (visName||'V').split(' ')[0].slice(0,8);
+  const chip = (ok, label, val) => ok
+    ? `<span class="calc-chip ok">${label} +${fmtPesos(val)}</span>`
+    : `<span class="calc-chip no">${label}</span>`;
+  return `<div class="result-bar ${cls}">
+      <span>${pLabel}</span>
+      <span>${p} PT${p!==1?'S':''} · ${fmtPesos(cp.pesos)}</span>
+    </div>
+    <div class="calc-row">
+      ${chip(cp.resultOk,'resultado',500)}
+      ${cp.exacto ? chip(true,'exacto',1000) : ''}
+      ${chip(cp.localOk,'gol '+ln,500)}
+      ${chip(cp.visOk,'gol '+vn,500)}
+    </div>
+    <div class="res-official">
+      Tu apuesta: <b>${bet.gl}–${bet.gv}</b>
+      &nbsp;·&nbsp; Oficial: <b>${res.gl}–${res.gv}</b>
+      ${res.gol && res.gol.trim() ? `&nbsp;·&nbsp; ⚽ ${res.gol}` : ''}
+    </div>`;
 }
 
 const pad = n => String(n).padStart(2,'0');
@@ -285,17 +356,18 @@ function renderBets() {
   const list = MATCHES.filter(m => !st || m.etapa === st);
 
   // Resumen global (todos los partidos, no solo el filtro)
-  let sumExactos=0, sumAciertos=0, sumFallados=0, sumEval=0;
+  let sumExactos=0, sumAciertos=0, sumFallados=0, sumEval=0, sumPesos=0;
   MATCHES.forEach(m => {
     const res = RESULTADOS[m.id];
     const bet = APUESTAS_CACHE[m.id];
     if (!res || !bet || bet.gl == null || bet.gv == null) return;
     sumEval++;
-    const p = points(bet, res);
+    const p  = points(bet, res);
+    const cp = calcPesos(bet, res);
     if (p===3) sumExactos++; else if (p===1) sumAciertos++; else sumFallados++;
+    if (cp) sumPesos += cp.pesos;
   });
   const sumPts   = sumExactos*3 + sumAciertos;
-  const sumPesos = sumExactos*1500 + sumAciertos*500;
   const summaryHtml = sumEval > 0
     ? `<div class="summary-bar">
         <span>📊 <b>${sumEval}</b> evaluados</span>
@@ -319,17 +391,7 @@ function renderBets() {
 
     let bottomHtml;
     if (res) {
-      const pLabel  = p===3 ? '⭐ EXACTO'  : p===1 ? '✓ ACIERTO' : '✗ FALLADO';
-      const pDetail = p===3 ? '3 PTS · $1.500' : p===1 ? '1 PT · $500' : '0 PTS';
-      bottomHtml = `
-        <div class="result-bar ${p===3?'exacto':p===1?'acierto':'fallado'}">
-          <span>${pLabel}</span><span>${pDetail}</span>
-        </div>
-        <div class="res-official">
-          Tu apuesta: <b>${bet.gl!=null?bet.gl:'—'}–${bet.gv!=null?bet.gv:'—'}</b>
-          &nbsp;·&nbsp; Oficial: <b>${res.gl}–${res.gv}</b>
-          ${res.gol ? `&nbsp;·&nbsp; ⚽ ${res.gol}` : ''}
-        </div>`;
+      bottomHtml = buildResultBar(bet, res, m.local, m.visitante);
     } else {
       const statusSpan = live
         ? `<span class="en-vivo-badge"><span class="en-vivo-dot"></span>EN VIVO</span>`
@@ -529,12 +591,14 @@ async function renderMembers() {
   $('memberList').innerHTML = (data||[]).map(u => {
     const ini = (u.nombre[0]||'') + (u.apellido[0]||'');
     const esYo = u.id === sesion.id;
-    return `<div class="member-card" ${esYo?'style="border-color:var(--amarillo);box-shadow:3px 3px 0 var(--amarillo)"':''}>
+    const nombre = u.nombre + ' ' + u.apellido;
+    return `<div class="member-card" ${esYo?'style="border-color:var(--amarillo);box-shadow:3px 3px 0 var(--amarillo)"':''} onclick="openMemberModal('${u.id}','${nombre.replace(/'/g,"\\'")}')">
       <div class="member-avatar">${ini.toUpperCase()}</div>
-      <div>
+      <div style="flex:1">
         <div style="font-weight:700;font-size:15px">${u.nombre} ${u.apellido} ${esYo?'<small style="font-size:11px;color:var(--grey)">(tú)</small>':''}</div>
         <div style="font-family:monospace;font-size:10px;color:var(--grey)">Registrado ${new Date(u.created_at).toLocaleDateString('es-CO')}</div>
       </div>
+      <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--grey)">Ver apuestas →</span>
     </div>`;
   }).join('') || '<div class="warn">Sin integrantes registrados.</div>';
 }
@@ -578,6 +642,81 @@ sb.channel('resultados-live')
 document.querySelector('[data-tab="tabla"]').addEventListener('click', () => {
   const b = document.querySelector('[data-tab="tabla"] .badge');
   if (b) b.remove();
+});
+
+// ── INTEGRANTES MODAL ──────────────────────────────
+window.openMemberModal = async (uid, name) => {
+  document.getElementById('modal-member-title').textContent = '⚽ Apuestas de ' + name;
+  document.getElementById('modal-member-body').innerHTML = '<div class="loading">Cargando apuestas…</div>';
+  document.getElementById('modal-member').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+
+  const { data: apuestas } = await sb.from('apuestas').select('*').eq('usuario_id', uid);
+  const userBets = {};
+  (apuestas || []).forEach(a => { userBets[a.partido_id] = { gl: a.goles_local, gv: a.goles_vis }; });
+
+  let exactos=0, aciertos=0, fallados=0, totalPesos=0, evaluados=0;
+  MATCHES.forEach(m => {
+    const res = RESULTADOS[m.id]; const bet = userBets[m.id];
+    if (!res || !bet || bet.gl == null || bet.gv == null) return;
+    evaluados++;
+    const p = points(bet, res); const cp = calcPesos(bet, res);
+    if (p===3) exactos++; else if (p===1) aciertos++; else fallados++;
+    if (cp) totalPesos += cp.pesos;
+  });
+
+  const hasBets = Object.keys(userBets).length;
+  const summaryHtml = hasBets > 0
+    ? `<div class="summary-bar" style="margin-bottom:16px">
+        <span>📊 <b>${evaluados}</b> evaluados</span>
+        <span>⭐ <b>${exactos}</b> exactos</span>
+        <span>✓ <b>${aciertos}</b> aciertos</span>
+        <span>✗ <b>${fallados}</b> fallados</span>
+        <span style="margin-left:auto;font-size:12px">💰 <b>${fmtPesos(totalPesos)}</b></span>
+       </div>`
+    : '<div class="warn">Este integrante aún no ha hecho apuestas.</div>';
+
+  const mkCard = m => {
+    const res = RESULTADOS[m.id];
+    const bet = userBets[m.id];
+    return `<div class="bet-card">
+      <div class="bet-top"><span class="stage">${m.etapa}</span><span>${fmtWhen(m)}</span></div>
+      <div class="bet-teams">
+        <div class="bt">${flag(m.codigo_local,m.local)}<span>${m.local}</span></div>
+        <div style="font-family:'Archivo Black',sans-serif;font-size:18px;padding:0 10px;color:${bet&&bet.gl!=null?'var(--nodo)':'var(--grey)'}">
+          ${bet&&bet.gl!=null ? `${bet.gl}–${bet.gv}` : '?–?'}
+        </div>
+        <div class="bt right"><span>${m.visitante}</span>${flag(m.codigo_vis,m.visitante)}</div>
+      </div>
+      ${buildResultBar(bet||null, res||null, m.local, m.visitante)}
+    </div>`;
+  };
+
+  const evaluated = MATCHES.filter(m => RESULTADOS[m.id] && userBets[m.id]?.gl != null);
+  const pending   = MATCHES.filter(m => !RESULTADOS[m.id] && userBets[m.id]?.gl != null);
+  const noBet     = MATCHES.filter(m => RESULTADOS[m.id] && !userBets[m.id]);
+
+  const section = (title, list) => list.length
+    ? `<h3 style="font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--nodo);margin:16px 0 10px;text-transform:uppercase;letter-spacing:.05em">${title} (${list.length})</h3>
+       <div class="bets-grid">${list.map(mkCard).join('')}</div>` : '';
+
+  const noBetNote = noBet.length
+    ? `<p style="font-family:monospace;font-size:10px;color:var(--grey);margin:14px 0 0">+ ${noBet.length} partido${noBet.length!==1?'s':''} con resultado donde no apostó.</p>` : '';
+
+  document.getElementById('modal-member-body').innerHTML =
+    summaryHtml +
+    section('✅ Evaluados', evaluated) +
+    section('⏳ Pendientes', pending) +
+    noBetNote;
+};
+
+window.closeMemberModal = () => {
+  document.getElementById('modal-member').style.display = 'none';
+  document.body.style.overflow = '';
+};
+
+document.getElementById('modal-member').addEventListener('click', e => {
+  if (e.target.id === 'modal-member') closeMemberModal();
 });
 
 init();

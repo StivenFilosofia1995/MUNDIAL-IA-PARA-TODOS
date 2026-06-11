@@ -13,101 +13,141 @@
     { file: 'doctor-krapula-pibe.mp3',      name: 'Pibe de Mi Barrio',         artist: 'Doctor Krapula' },
   ];
 
-  // Pick random song (different from last one stored)
-  const lastIdx = parseInt(sessionStorage.getItem('last-song') || '-1');
+  // Start from a random song (avoid last one)
+  const lastIdx = parseInt(sessionStorage.getItem('mp-last') || '-1');
   let idx;
   do { idx = Math.floor(Math.random() * SONGS.length); } while (idx === lastIdx && SONGS.length > 1);
-  sessionStorage.setItem('last-song', idx);
-  const song = SONGS[idx];
 
-  // ── CREATE PLAYER DOM ──────────────────────────────────────
+  // ── STYLES ─────────────────────────────────────────────────
   const style = document.createElement('style');
   style.textContent = `
     #mp-wrap{position:fixed;bottom:18px;right:18px;z-index:9999;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none}
-    #mp-toast{background:#001166;color:#fff;font-family:'Spline Sans Mono',monospace,monospace;font-size:10px;
-      padding:8px 14px 8px 12px;border-left:4px solid #FCD116;box-shadow:4px 4px 0 rgba(0,0,0,.35);
-      max-width:240px;pointer-events:auto;
-      animation:mp-slide-in .5s cubic-bezier(.22,.68,0,1.2) both}
-    #mp-toast .mp-song{font-weight:700;font-size:11px;color:#FCD116;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
-    #mp-toast .mp-artist{color:rgba(255,255,255,.6);font-size:9px;letter-spacing:.06em;margin-top:1px}
-    #mp-btn{width:44px;height:44px;border-radius:50%;background:#001166;border:3px solid #FCD116;
+    #mp-toast{background:#001166;color:#fff;font-family:'Spline Sans Mono',monospace;font-size:10px;
+      padding:10px 14px 10px 12px;border-left:4px solid #FCD116;
+      box-shadow:4px 4px 0 rgba(0,0,0,.4);max-width:250px;pointer-events:auto;
+      animation:mp-in .5s cubic-bezier(.22,.68,0,1.2) both}
+    #mp-toast.hide{animation:mp-out .35s ease forwards}
+    @keyframes mp-in{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes mp-out{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(60px)}}
+    #mp-song{font-weight:700;font-size:11px;color:#FCD116;letter-spacing:.04em;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;margin-bottom:1px}
+    #mp-artist{color:rgba(255,255,255,.55);font-size:9px;letter-spacing:.06em;margin-bottom:8px}
+    #mp-bar-wrap{height:2px;background:rgba(255,255,255,.15);margin-bottom:8px}
+    #mp-bar{height:2px;background:#FCD116;width:0%;transition:width .5s linear}
+    #mp-controls{display:flex;align-items:center;justify-content:space-between;gap:6px}
+    .mp-ctrl{background:transparent;border:1.5px solid rgba(255,255,255,.25);color:rgba(255,255,255,.7);
+      width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:12px;display:flex;
+      align-items:center;justify-content:center;transition:all .15s;padding:0}
+    .mp-ctrl:hover{border-color:#FCD116;color:#FCD116;background:rgba(252,209,22,.1)}
+    #mp-play{background:#FCD116;border-color:#FCD116;color:#001166;width:34px;height:34px;font-size:15px}
+    #mp-play:hover{background:#ffe44d;border-color:#ffe44d}
+    #mp-play.muted{background:#4b5563;border-color:#4b5563;color:rgba(255,255,255,.5)}
+    #mp-fab{width:44px;height:44px;border-radius:50%;background:#001166;border:3px solid #FCD116;
       color:#FCD116;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;
       box-shadow:3px 3px 0 rgba(0,0,0,.35);transition:all .15s;pointer-events:auto}
-    #mp-btn:hover{transform:scale(1.1);background:#0022aa}
-    #mp-btn.muted{background:#6b7280;border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.5)}
-    #mp-toast.hide{animation:mp-slide-out .4s ease forwards}
-    @keyframes mp-slide-in{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
-    @keyframes mp-slide-out{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(60px)}}
-    #mp-bar{height:2px;background:#FCD116;width:0%;margin-top:5px;transition:width .5s linear}
+    #mp-fab:hover{transform:scale(1.08);background:#0022aa}
+    #mp-fab.muted{background:#4b5563;border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.4)}
   `;
   document.head.appendChild(style);
 
-  const wrap  = document.createElement('div'); wrap.id = 'mp-wrap';
+  // ── DOM ────────────────────────────────────────────────────
+  const wrap = document.createElement('div'); wrap.id = 'mp-wrap';
+
   const toast = document.createElement('div'); toast.id = 'mp-toast';
   toast.innerHTML = `
-    <div class="mp-song">🎵 ${song.name}</div>
-    <div class="mp-artist">${song.artist}</div>
-    <div id="mp-bar"></div>
+    <div id="mp-song">🎵 —</div>
+    <div id="mp-artist">—</div>
+    <div id="mp-bar-wrap"><div id="mp-bar"></div></div>
+    <div id="mp-controls">
+      <button class="mp-ctrl" id="mp-prev" title="Anterior">⏮</button>
+      <button class="mp-ctrl" id="mp-play" title="Silenciar / activar">🔊</button>
+      <button class="mp-ctrl" id="mp-next" title="Siguiente">⏭</button>
+    </div>
   `;
-  const btn = document.createElement('button'); btn.id = 'mp-btn'; btn.title = 'Silenciar / activar música';
-  btn.textContent = '🔊';
+
+  const fab = document.createElement('button'); fab.id = 'mp-fab'; fab.title = 'Música';
+  fab.textContent = '🎵';
+
   wrap.appendChild(toast);
-  wrap.appendChild(btn);
+  wrap.appendChild(fab);
   document.body.appendChild(wrap);
 
   // ── AUDIO ──────────────────────────────────────────────────
-  const audio = new Audio('/music/' + song.file);
+  const audio  = new Audio();
   audio.volume = 0.45;
-  audio.loop   = true;
+  audio.loop   = false; // manual loop so we can go to next song
 
   let muted   = false;
   let started = false;
 
-  function tryPlay() {
-    if (started) return;
-    audio.play().then(() => { started = true; }).catch(() => {});
+  function loadSong(i, autoplay) {
+    idx = ((i % SONGS.length) + SONGS.length) % SONGS.length;
+    sessionStorage.setItem('mp-last', idx);
+    const s = SONGS[idx];
+    audio.src = '/music/' + s.file;
+    document.getElementById('mp-song').textContent   = '🎵 ' + s.name;
+    document.getElementById('mp-artist').textContent = s.artist;
+    document.getElementById('mp-bar').style.width    = '0%';
+    if (autoplay && started) audio.play().catch(() => {});
   }
 
-  // Start on first user interaction (browser autoplay policy)
+  audio.addEventListener('ended', () => loadSong(idx + 1, true));
+
+  audio.addEventListener('timeupdate', () => {
+    if (!audio.duration) return;
+    document.getElementById('mp-bar').style.width = (audio.currentTime / audio.duration * 100) + '%';
+  });
+
+  loadSong(idx, false);
+
+  function tryPlay() {
+    if (started) return;
+    started = true;
+    audio.play().catch(() => { started = false; });
+  }
+
   ['click','keydown','touchstart'].forEach(ev =>
     document.addEventListener(ev, tryPlay, { once: true })
   );
 
-  // Progress bar
-  audio.addEventListener('timeupdate', () => {
-    const pct = audio.duration ? (audio.currentTime / audio.duration * 100) : 0;
-    const bar = document.getElementById('mp-bar');
-    if (bar) bar.style.width = pct + '%';
-  });
+  // ── CONTROLS ───────────────────────────────────────────────
+  const playBtn = document.getElementById('mp-play');
+  const prevBtn = document.getElementById('mp-prev');
+  const nextBtn = document.getElementById('mp-next');
 
-  // Auto-hide toast after 6s, re-show on hover
-  let toastTimer = setTimeout(() => toast.classList.add('hide'), 6000);
-  btn.addEventListener('mouseenter', () => {
-    clearTimeout(toastTimer);
-    toast.classList.remove('hide');
-  });
-  btn.addEventListener('mouseleave', () => {
-    toastTimer = setTimeout(() => toast.classList.add('hide'), 3000);
-  });
-  toast.addEventListener('mouseenter', () => {
-    clearTimeout(toastTimer);
-    toast.classList.remove('hide');
-  });
-  toast.addEventListener('mouseleave', () => {
-    toastTimer = setTimeout(() => toast.classList.add('hide'), 3000);
-  });
-
-  // Mute toggle
-  btn.addEventListener('click', () => {
+  function toggleMute() {
     muted = !muted;
     audio.muted = muted;
-    btn.textContent = muted ? '🔇' : '🔊';
-    btn.classList.toggle('muted', muted);
-    // Show toast briefly
+    playBtn.textContent = muted ? '🔇' : '🔊';
+    playBtn.classList.toggle('muted', muted);
+    fab.classList.toggle('muted', muted);
+    fab.textContent = muted ? '🔇' : '🎵';
+    if (!muted) tryPlay();
+    showToast();
+  }
+
+  playBtn.addEventListener('click', toggleMute);
+  fab.addEventListener('click', () => {
+    const hidden = toast.classList.contains('hide') || toast.style.animation?.includes('out');
+    if (hidden || !toast.style.opacity) { showToast(); } else { toggleMute(); }
+  });
+
+  prevBtn.addEventListener('click', () => { loadSong(idx - 1, true); showToast(); });
+  nextBtn.addEventListener('click', () => { loadSong(idx + 1, true); showToast(); });
+
+  // ── TOAST AUTO-HIDE ────────────────────────────────────────
+  let toastTimer;
+  function showToast(ms = 5000) {
     clearTimeout(toastTimer);
     toast.classList.remove('hide');
-    toastTimer = setTimeout(() => toast.classList.add('hide'), 3000);
-    // Try to start if not started
-    if (!muted) tryPlay();
+    toastTimer = setTimeout(() => toast.classList.add('hide'), ms);
+  }
+
+  // Show on first song load after 1s
+  setTimeout(() => showToast(6000), 1000);
+
+  [toast, fab].forEach(el => {
+    el.addEventListener('mouseenter', () => { clearTimeout(toastTimer); toast.classList.remove('hide'); });
+    el.addEventListener('mouseleave', () => { toastTimer = setTimeout(() => toast.classList.add('hide'), 3000); });
   });
 })();

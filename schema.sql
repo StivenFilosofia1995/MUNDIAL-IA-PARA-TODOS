@@ -118,7 +118,12 @@ CREATE POLICY "anon_all_asistencias" ON asistencias FOR ALL TO anon USING (true)
 
 -- ============================================================
 -- 5. VISTA: TABLA DE POSICIONES CON PESOS COP
--- Exacto (3 pts) = $1.500 · Acierto (1 pt) = $500
+-- Fórmula por partido:
+--   +$500 resultado correcto (ganador/empate)
+--   +$1.000 bonus si marcador exacto
+--   +$500 goles local adivinados
+--   +$500 goles visitante adivinados
+--   MÁXIMO $2.500 por partido (exacto perfecto)
 -- ============================================================
 CREATE OR REPLACE VIEW v_tabla AS
 SELECT
@@ -132,11 +137,12 @@ SELECT
     WHEN SIGN(a.goles_local - a.goles_vis) = SIGN(r.goles_local - r.goles_vis) THEN 1
     ELSE 0
   END), 0)                              AS puntos,
-  COALESCE(SUM(CASE
-    WHEN a.goles_local = r.goles_local AND a.goles_vis = r.goles_vis THEN 1500
-    WHEN SIGN(a.goles_local - a.goles_vis) = SIGN(r.goles_local - r.goles_vis) THEN 500
-    ELSE 0
-  END), 0)                              AS pesos,
+  COALESCE(SUM(
+    CASE WHEN SIGN(a.goles_local - a.goles_vis) = SIGN(r.goles_local - r.goles_vis) THEN 500 ELSE 0 END
+    + CASE WHEN a.goles_local = r.goles_local AND a.goles_vis = r.goles_vis THEN 1000 ELSE 0 END
+    + CASE WHEN a.goles_local = r.goles_local THEN 500 ELSE 0 END
+    + CASE WHEN a.goles_vis   = r.goles_vis   THEN 500 ELSE 0 END
+  ), 0)                                 AS pesos,
   COALESCE(SUM(CASE
     WHEN a.goles_local = r.goles_local AND a.goles_vis = r.goles_vis THEN 1 ELSE 0
   END), 0)                              AS exactos,

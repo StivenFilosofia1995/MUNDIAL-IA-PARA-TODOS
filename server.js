@@ -6,9 +6,9 @@ const app     = express();
 const PORT             = process.env.PORT || 3000;
 const SUPABASE_URL     = process.env.SUPABASE_URL   || '';
 const SUPABASE_ANON    = process.env.SUPABASE_ANON_KEY || '';
-const FOOTBALL_API_KEY = process.env.FOOTBALL_API_KEY  || '';
+const FOOTBALL_API_KEY = process.env.FOOTBALL_API_KEY  || ''; // opcional
 
-// ── Frontend config ──────────────────────────────────────────
+// ── Frontend config ──────────────────────────────────────────────
 app.get('/config.js', (req, res) => {
   res.setHeader('Content-Type', 'application/javascript');
   res.send(`window.SUPABASE_URL="${SUPABASE_URL}";window.SUPABASE_ANON_KEY="${SUPABASE_ANON}";`);
@@ -17,16 +17,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.listen(PORT, () => console.log(`Polla NODO corriendo en :${PORT}`));
 
-// ── Live score polling ────────────────────────────────────────
-// Regístrate GRATIS en https://www.football-data.org/client/register
-// Agrega FOOTBALL_API_KEY=tu_clave_aqui al archivo .env
-// Sin la clave, los resultados se ingresan manualmente y se actualizan en tiempo real igual.
-
+// ── Nombres de equipos en español ───────────────────────────────
 const TEAM_ES = {
   'Mexico':'México','South Africa':'Sudáfrica','South Korea':'Corea del Sur',
   'Czech Republic':'República Checa','Czechia':'República Checa',
   'Bosnia and Herzegovina':'Bosnia y Herzegovina','Bosnia & Herzegovina':'Bosnia y Herzegovina',
-  'United States':'Estados Unidos','USA':'Estados Unidos','Haiti':'Haití','Haïti':'Haití',
+  'United States':'Estados Unidos','USA':'Estados Unidos',
+  'Haiti':'Haití','Haïti':'Haití',
   'Brazil':'Brasil','Morocco':'Marruecos','Switzerland':'Suiza',
   "Côte d'Ivoire":'Costa de Marfil','Ivory Coast':'Costa de Marfil',
   'Germany':'Alemania','Netherlands':'Países Bajos','Sweden':'Suecia',
@@ -43,8 +40,10 @@ const TEAM_ES = {
   'Jordan':'Jordania','Algeria':'Argelia','Tunisia':'Túnez',
   'Senegal':'Senegal','Nigeria':'Nigeria','Cameroon':'Camerún',
   'Qatar':'Catar','Curacao':'Curazao','Curaçao':'Curazao',
+  'Curaçao':'Curazao','Cabo Verde':'Cabo Verde',
 };
 
+// ── Supabase REST helper ─────────────────────────────────────────
 async function sbRest(endpoint, method = 'GET', body = null) {
   const opts = {
     method,
@@ -70,14 +69,78 @@ async function findPartidoId(localEs, visEs) {
   return data?.[0]?.id ?? null;
 }
 
-async function pollLiveScores() {
+async function upsertResultado(pid, gl, gv, goleadores) {
+  if (gl == null || gv == null) return;
+  await sbRest('/resultados', 'POST', [{
+    partido_id: pid,
+    goles_local: gl,
+    goles_vis: gv,
+    goleadores: goleadores || '',
+    updated_at: new Date().toISOString()
+  }]);
+}
+
+// ── ESPN FREE API (sin clave, automático) ────────────────────────
+// Fuente: ESPN scores API para FIFA World Cup — funciona sin registro
+async function pollESPN() {
+  try {
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${today}`;
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) { console.error('[espn]', res.status); return; }
+    const { events = [] } = await res.json();
+
+    let updated = 0;
+    for (const ev of events) {
+      const comp   = ev.competitions?.[0];
+      if (!comp) continue;
+      const status = ev.status?.type?.name || '';
+      if (!['STATUS_IN_PROGRESS','STATUS_HALFTIME','STATUS_FINAL','STATUS_FULL_TIME'].includes(status)) continue;
+
+      const home = comp.competitors?.find(c => c.homeAway === 'home');
+      const away = comp.competitors?.find(c => c.homeAway === 'away');
+      if (!home || !away) continue;
+
+      const gl = parseInt(home.score ?? '0');
+      const gv = parseInt(away.score ?? '0');
+
+      const homeEs = TEAM_ES[home.team?.displayName] || TEAM_ES[home.team?.name] || home.team?.displayName || '';
+      const awayEs = TEAM_ES[away.team?.displayName] || TEAM_ES[away.team?.name] || away.team?.displayName || '';
+      if (!homeEs || !awayEs) continue;
+
+      const pid = await findPartidoId(homeEs, awayEs);
+      if (!pid) { console.log('[espn] no mapeado:', homeEs, 'vs', awayEs); continue; }
+
+      // Goleadores desde ESPN details
+      const goals = (comp.details || [])
+        .filter(d => d.type?.text === 'Goal Scored' || d.type?.id === '70' || d.scoringPlay)
+        .map(d => {
+          const scorer = d.athletesInvolved?.[0]?.displayName || d.participants?.[0]?.displayName || '?';
+          const min    = d.clock?.value != null ? Math.round(d.clock.value / 60) + "'" : '';
+          const pen    = d.penaltyKick ? ' (pen)' : '';
+          const og     = d.ownGoal ? ' (pp)' : '';
+          return `${scorer}${min ? ' '+min : ''}${pen}${og}`;
+        });
+
+      await upsertResultado(pid, gl, gv, goals.join(' · '));
+      console.log(`[espn] ${homeEs} ${gl}–${gv} ${awayEs}${goals.length ? ' | '+goals.join(', ') : ''}`);
+      updated++;
+    }
+    if (updated) console.log(`[espn] ${updated} partidos actualizados`);
+  } catch (e) {
+    console.error('[espn]', e.message);
+  }
+}
+
+// ── football-data.org (opcional, si el usuario pone FOOTBALL_API_KEY) ───
+async function pollFootballData() {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const res = await fetch(
       `https://api.football-data.org/v4/competitions/WC/matches?dateFrom=${today}&dateTo=${today}`,
       { headers: { 'X-Auth-Token': FOOTBALL_API_KEY } }
     );
-    if (!res.ok) { console.error('[live]', res.status); return; }
+    if (!res.ok) { console.error('[fd]', res.status); return; }
     const { matches = [] } = await res.json();
 
     for (const m of matches) {
@@ -89,28 +152,32 @@ async function pollLiveScores() {
       const localEs = TEAM_ES[m.homeTeam.name] || m.homeTeam.name;
       const visEs   = TEAM_ES[m.awayTeam.name] || m.awayTeam.name;
       const pid     = await findPartidoId(localEs, visEs);
-      if (!pid) { console.log('[live] no encontrado:', localEs, 'vs', visEs); continue; }
+      if (!pid) continue;
 
       const goleadores = (m.goals || []).map(g => {
         const tipo = g.type === 'PENALTY' ? ' (pen)' : g.type === 'OWN_GOAL' ? ' (pp)' : '';
         return `${g.scorer?.name || '?'} ${g.minute}'${tipo}`;
       }).join(' · ');
 
-      await sbRest('/resultados', 'POST', [{
-        partido_id: pid, goles_local: gl, goles_vis: gv,
-        goleadores, updated_at: new Date().toISOString()
-      }]);
-      console.log(`[live] ${localEs} ${gl}–${gv} ${visEs}${goleadores ? ' | ' + goleadores : ''}`);
+      await upsertResultado(pid, gl, gv, goleadores);
+      console.log(`[fd] ${localEs} ${gl}–${gv} ${visEs}`);
     }
   } catch (e) {
-    console.error('[live]', e.message);
+    console.error('[fd]', e.message);
   }
 }
 
-if (FOOTBALL_API_KEY) {
-  console.log('[live] Polling activo — football-data.org');
-  pollLiveScores();
-  setInterval(pollLiveScores, 60_000);
+// ── Iniciar polling ──────────────────────────────────────────────
+if (SUPABASE_URL && SUPABASE_ANON) {
+  if (FOOTBALL_API_KEY) {
+    console.log('[live] football-data.org activo (clave configurada)');
+    pollFootballData();
+    setInterval(pollFootballData, 60_000);
+  } else {
+    console.log('[live] ESPN free API activo (automático, sin clave)');
+    pollESPN();
+    setInterval(pollESPN, 60_000);
+  }
 } else {
-  console.log('[live] Sin FOOTBALL_API_KEY — resultados en modo manual');
+  console.log('[live] Sin Supabase — modo offline');
 }
