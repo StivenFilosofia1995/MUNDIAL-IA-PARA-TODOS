@@ -330,32 +330,52 @@ function agendarPartido(m) {
   const googleDate = t => t.toISOString().replace(/-|:|\.\d+/g,'');
   const outlookDate = t => t.toISOString();
 
-  // Crear mini menú
-  const menu = document.createElement('div');
-  menu.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);border:3px solid var(--nodo);box-shadow:8px 8px 0 var(--amarillo);padding:20px;z-index:300;min-width:320px';
-  menu.innerHTML = `
-    <h3 style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--nodo);margin-bottom:14px">📆 Agendar: ${m.local} vs ${m.visitante}</h3>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <button class="btn primary" onclick="window.open('https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${googleDate(start)}/${googleDate(end)}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}','_blank');this.closest('div').parentElement.parentElement.remove()" style="width:100%;justify-content:center;display:flex;gap:8px;font-size:13px">
-        📅 Google Calendar
-      </button>
-      <button class="btn blue" onclick="window.open('https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(title)}&startdt=${outlookDate(start)}&enddt=${outlookDate(end)}&body=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}','_blank');this.closest('div').parentElement.parentElement.remove()" style="width:100%;justify-content:center;display:flex;gap:8px;font-size:13px">
-        📧 Outlook / Office 365
-      </button>
-      <button class="btn" onclick="descargarIcs(MATCHES.find(x=>x.id===${m.id}));this.closest('div').parentElement.parentElement.remove()" style="width:100%;justify-content:center;display:flex;gap:8px;font-size:13px">
-        💾 Descargar .ics
-      </button>
-      <button onclick="this.closest('div').parentElement.parentElement.remove()" style="background:transparent;border:none;color:var(--grey);cursor:pointer;font-size:11px;margin-top:4px;font-family:monospace">Cancelar</button>
-    </div>
-  `;
-
   // Overlay
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,30,.6);z-index:299';
-  overlay.onclick = () => { overlay.remove(); menu.remove(); };
+
+  // Crear mini menú
+  const menu = document.createElement('div');
+  menu.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);border:3px solid var(--nodo);box-shadow:8px 8px 0 var(--amarillo);padding:20px;z-index:300;min-width:320px';
+
+  const cerrarMenu = () => { overlay.remove(); menu.remove(); };
+  overlay.onclick = cerrarMenu;
+
+  menu.innerHTML = `
+    <h3 style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--nodo);margin-bottom:14px">📆 Agendar: ${m.local} vs ${m.visitante}</h3>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn primary" id="btnGoogle" style="width:100%;justify-content:center;display:flex;gap:8px;font-size:13px">
+        📅 Google Calendar
+      </button>
+      <button class="btn blue" id="btnOutlook" style="width:100%;justify-content:center;display:flex;gap:8px;font-size:13px">
+        📧 Outlook / Office 365
+      </button>
+      <button class="btn" id="btnIcs" style="width:100%;justify-content:center;display:flex;gap:8px;font-size:13px">
+        💾 Descargar .ics
+      </button>
+      <button id="btnCancel" style="background:transparent;border:none;color:var(--grey);cursor:pointer;font-size:11px;margin-top:4px;font-family:monospace">Cancelar</button>
+    </div>
+  `;
 
   document.body.appendChild(overlay);
   document.body.appendChild(menu);
+
+  menu.querySelector('#btnGoogle').onclick = () => {
+    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${googleDate(start)}/${googleDate(end)}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`,'_blank');
+    cerrarMenu();
+  };
+
+  menu.querySelector('#btnOutlook').onclick = () => {
+    window.open(`https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(title)}&startdt=${outlookDate(start)}&enddt=${outlookDate(end)}&body=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`,'_blank');
+    cerrarMenu();
+  };
+
+  menu.querySelector('#btnIcs').onclick = () => {
+    descargarIcs(m);
+    cerrarMenu();
+  };
+
+  menu.querySelector('#btnCancel').onclick = cerrarMenu;
 }
 
 function descargarIcs(m) {
