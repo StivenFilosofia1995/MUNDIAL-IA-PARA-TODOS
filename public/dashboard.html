@@ -107,6 +107,8 @@ main{padding:20px 5vw 80px;max-width:1200px;margin:0 auto}
 .en-vivo-badge{display:inline-flex;align-items:center;gap:5px;background:var(--rojo);color:var(--blanco);font-family:'Spline Sans Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:2px 8px;border-radius:1px;vertical-align:middle}
 .en-vivo-dot{width:5px;height:5px;background:var(--blanco);border-radius:50%;animation:pulse 1s infinite;flex:none}
 .goleadores-dash{font-family:'Spline Sans Mono',monospace;font-size:10px;color:#374151;margin-top:8px;padding-top:7px;border-top:1px dashed rgba(0,17,102,.2);line-height:1.5}
+.tc{display:inline-block;width:9px;height:13px;border-radius:1px;vertical-align:middle;margin-right:2px;flex:none;box-shadow:1px 1px 0 rgba(0,0,0,.28)}
+.tc-y{background:#FCD116}.tc-r{background:#CE1126}
 .empty{text-align:center;padding:40px;color:var(--grey);font-size:13px;font-family:'Spline Sans Mono',monospace}
 footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:14px 5vw;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 @media(max-width:640px){.match-row{grid-template-columns:70px 1fr}.stage-col{display:none}.toolbar input{min-width:100px}}
@@ -243,6 +245,17 @@ $('searchBox').oninput = renderAll;
 $('btnCo').onclick = () => { filtroCo = !filtroCo; $('btnCo').classList.toggle('on', filtroCo); renderAll(); };
 $('btnUpcoming').onclick = () => { filtroUpcom = !filtroUpcom; $('btnUpcoming').classList.toggle('on', filtroUpcom); renderAll(); };
 
+function fmtCard(s) {
+  if (!s) return s;
+  const YR = '<span class="tc tc-y"></span><span class="tc tc-r"></span>';
+  const Y  = '<span class="tc tc-y"></span>';
+  const R  = '<span class="tc tc-r"></span>';
+  if (s.startsWith('🟨🟥')) return YR + ' ' + s.slice(4).trim();
+  if (s.startsWith('🟥'))   return R  + ' ' + s.slice(2).trim();
+  if (s.startsWith('🟨'))   return Y  + ' ' + s.slice(2).trim();
+  return s;
+}
+
 // ── RESULTADOS DEL DÍA ─────────────────────────────
 function resCard(m) {
   const r   = RESULTADOS[m.id];
@@ -265,8 +278,8 @@ function resCard(m) {
       ${scoreHtml}
       <div class="r-team right"><span>${m.visitante}</span>${flag(m.codigo_vis,m.visitante)}</div>
     </div>
-    ${r&&r.gol?`<div class="goleadores-dash">${r.gol.split(' · ').map(g=>`<div>⚽ ${g}</div>`).join('')}</div>`:''}
-    ${r&&r.tar?`<div class="goleadores-dash" style="border-top:none;padding-top:0;margin-top:2px">${r.tar.split(' · ').map(t=>`<div>${t}</div>`).join('')}</div>`:''}
+    ${r&&r.gol ? '<div class="goleadores-dash">'+r.gol.split(' · ').map(g=>'<div>⚽ '+g+'</div>').join('')+'</div>' : ''}
+    ${r&&r.tar ? '<div class="goleadores-dash" style="border-top:none;padding-top:0;margin-top:2px">'+r.tar.split(' · ').map(t=>'<div>'+fmtCard(t)+'</div>').join('')+'</div>' : ''}
     ${!r?`<div style="text-align:center;margin-top:10px"><button class="ics-btn" onclick="downloadIcs(${m.id})">📆 Agendar partido</button></div>`:''}
   </div>`;
 }

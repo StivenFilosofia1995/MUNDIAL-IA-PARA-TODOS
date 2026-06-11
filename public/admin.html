@@ -93,7 +93,9 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:14px 4vw;font-f
 .card-row .card-name{flex:1;min-width:110px;font-family:'Spline Sans Mono',monospace;font-size:11px;border:1.5px solid rgba(206,17,38,.25);background:#fff;padding:3px 7px;color:var(--ink)}
 .card-row .card-min{width:50px;font-family:'Spline Sans Mono',monospace;font-size:11px;border:1.5px solid rgba(206,17,38,.25);background:#fff;padding:3px 5px;text-align:center;color:var(--ink)}
 .card-row .card-type{font-family:'Spline Sans Mono',monospace;font-size:11px;border:1.5px solid rgba(206,17,38,.25);background:#fff;padding:3px 5px;color:var(--ink);cursor:pointer}
-.section-sep{font-family:'Spline Sans Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grey);margin-top:10px;margin-bottom:4px;padding-top:8px;border-top:1px dashed rgba(0,17,102,.12)}
+.section-sep{font-family:'Spline Sans Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grey);margin-top:10px;margin-bottom:4px;padding-top:8px;border-top:1px dashed rgba(0,17,102,.12);display:flex;align-items:center;gap:6px}
+.tc{display:inline-block;width:9px;height:13px;border-radius:1px;vertical-align:middle;flex:none;box-shadow:1px 1px 0 rgba(0,0,0,.28)}
+.tc-y{background:#FCD116}.tc-r{background:#CE1126}
 
 /* TABLERO EN VIVO */
 .live-board{background:var(--nodo);padding:20px 4vw 24px;border-bottom:4px solid var(--amarillo)}
@@ -415,11 +417,12 @@ function renderRes() {
       </div>
       <div class="gol-builder">
         <div class="section-sep">⚽ Goles</div>
+
         <div class="gol-rows" id="gol-rows-${m.id}">
           ${parseGols(r.gol||'').map(g=>golRowHtml(m.id,g)).join('')}
         </div>
         <button class="btn-add-gol" onclick="addGolRow(${m.id})">+ Agregar gol</button>
-        <div class="section-sep">🟨 Tarjetas</div>
+        <div class="section-sep"><span class="tc tc-y"></span><span class="tc tc-r"></span> Tarjetas</div>
         <div class="card-builder">
           <div class="card-rows" id="card-rows-${m.id}">
             ${parseTarjetas(r.tar||'').map(t=>cardRowHtml(m.id,t)).join('')}

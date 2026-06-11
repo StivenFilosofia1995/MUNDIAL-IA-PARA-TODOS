@@ -84,6 +84,8 @@ input[type="number"],input[type="text"],select{font-family:'Spline Sans Mono',mo
 .en-vivo-badge{display:inline-flex;align-items:center;gap:5px;background:var(--rojo);color:var(--blanco);font-family:'Spline Sans Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:2px 8px}
 .en-vivo-dot{width:5px;height:5px;background:var(--blanco);border-radius:50%;animation:livepulse 1s infinite;flex:none}
 .goleadores-row{margin-top:7px;font-family:'Spline Sans Mono',monospace;font-size:10px;color:#374151;padding-top:6px;border-top:1px dashed rgba(0,17,102,.15)}
+.tc{display:inline-block;width:9px;height:13px;border-radius:1px;vertical-align:middle;margin-right:2px;flex:none;box-shadow:1px 1px 0 rgba(0,0,0,.28)}
+.tc-y{background:#FCD116}.tc-r{background:#CE1126}
 .live-strip{height:2px;background:linear-gradient(90deg,var(--rojo),transparent);margin-top:8px;animation:livepulse 2s infinite}
 .gol-input{font-family:'Spline Sans Mono',monospace !important;font-size:11px !important;border:1.5px solid rgba(0,17,102,.25) !important;background:#f8f9ff !important;padding:6px 10px !important;width:100%;display:block;margin-top:8px}
 .result-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;margin-top:8px;font-family:'Spline Sans Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
@@ -558,6 +560,18 @@ setInterval(() => {
   if (document.querySelector('[data-tab="apuestas"].on')) renderBets();
 }, 30_000);
 
+// Convierte '🟨 Jugador 34'' → tarjeta CSS + nombre
+function fmtCard(s) {
+  if (!s) return s;
+  const YR = '<span class="tc tc-y"></span><span class="tc tc-r"></span>';
+  const Y  = '<span class="tc tc-y"></span>';
+  const R  = '<span class="tc tc-r"></span>';
+  if (s.startsWith('🟨🟥')) return YR + ' ' + s.slice(4).trim();
+  if (s.startsWith('🟥'))   return R  + ' ' + s.slice(2).trim();
+  if (s.startsWith('🟨'))   return Y  + ' ' + s.slice(2).trim();
+  return s;
+}
+
 // ── RESULTADOS (solo lectura) ─────────────────────
 function renderRes() {
   const st = $('resStage').value;
@@ -584,7 +598,7 @@ function renderRes() {
         <div class="bt right"><span>${m.visitante}</span>${flag(m.codigo_vis,m.visitante)}</div>
       </div>
       ${r && r.gol && r.gol.trim() ? `<div class="goleadores-row">${r.gol.split(' · ').map(g=>`<div>⚽ ${g}</div>`).join('')}</div>` : ''}
-      ${r && r.tar && r.tar.trim() ? `<div class="goleadores-row" style="border-top:none;padding-top:0">${r.tar.split(' · ').map(t=>`<div>${t}</div>`).join('')}</div>` : ''}
+      ${r && r.tar && r.tar.trim() ? `<div class="goleadores-row" style="border-top:none;padding-top:0">${r.tar.split(' · ').map(t=>`<div>${fmtCard(t)}</div>`).join('')}</div>` : ''}
       ${live ? '<div class="live-strip"></div>' : ''}
     </div>`;
   };
