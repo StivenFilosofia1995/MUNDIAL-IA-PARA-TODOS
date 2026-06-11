@@ -257,7 +257,7 @@ const $ = id => document.getElementById(id);
 const DAYS = ['dom','lun','mar','mié','jue','vie','sáb'];
 const flag  = (c,l) => c ? `<img class="flag" src="https://flagcdn.com/w80/${c}.png" alt="${l}">` : `<div class="flag-tbd">${(l||'').slice(0,3)||'?'}</div>`;
 const started  = m => new Date(m.fecha+'T'+m.hora+':00-05:00') <= new Date();
-const isLive   = m => { if (RESULTADOS[m.id]) return false; const s=new Date(m.fecha+'T'+m.hora+':00-05:00'),mins=(Date.now()-s)/60000; return mins>=0&&mins<130; };
+const isLive   = m => { const s=new Date(m.fecha+'T'+m.hora+':00-05:00'),mins=(Date.now()-s)/60000; return mins>=0&&mins<130; };
 const fmtPesos = p => '$'+new Intl.NumberFormat('es-CO').format(p);
 const fmtWhen  = m => { const d=new Date(m.fecha+'T12:00:00-05:00'); return `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1} · ${m.hora}`; };
 
@@ -460,6 +460,7 @@ function renderBets() {
     let bottomHtml;
     if (res && started(m)) {
       bottomHtml = buildResultBar(bet, res, m.local, m.visitante);
+      if (live) bottomHtml += '<div class="live-strip"></div>';
     } else {
       const statusSpan = live
         ? `<span class="en-vivo-badge"><span class="en-vivo-dot"></span>EN VIVO</span>`
@@ -469,7 +470,7 @@ function renderBets() {
         ${live ? '<div class="live-strip"></div>' : ''}`;
     }
 
-    return `<div class="bet-card ${lock?'locked':''} ${live&&!res?'saving':''}" id="card-${m.id}">
+    return `<div class="bet-card ${live?'saving':lock?'locked':''}" id="card-${m.id}">
       <div class="bet-top">
         <span class="stage">${m.etapa}</span>
         <span>P${m.id} · ${fmtWhen(m)}${whenTag}</span>
@@ -537,29 +538,29 @@ window.saveAllApuestas = async () => {
 function renderRes() {
   const st = $('resStage').value;
   const list = MATCHES.filter(m => !st || m.etapa === st);
-  const played = list.filter(m => RESULTADOS[m.id]);
-  const pending = list.filter(m => !RESULTADOS[m.id] && started(m));
-  const upcoming = list.filter(m => !RESULTADOS[m.id] && !started(m));
+  const played  = list.filter(m => RESULTADOS[m.id] && !isLive(m));
+  const pending = list.filter(m => isLive(m) || (!RESULTADOS[m.id] && started(m)));
+  const upcoming = list.filter(m => !started(m) && !isLive(m));
 
   const mkRow = (m, showEmpty) => {
     const r = RESULTADOS[m.id];
     const live = isLive(m);
-    return `<div class="bet-card ${live&&!r?'saving':''}">
+    return `<div class="bet-card ${live?'saving':''}">
       <div class="bet-top">
         <span class="stage">${m.etapa}</span>
         <span>P${m.id} · ${fmtWhen(m)}</span>
-        ${live&&!r ? `<span class="en-vivo-badge"><span class="en-vivo-dot"></span>EN VIVO</span>` : ''}
+        ${live ? `<span class="en-vivo-badge"><span class="en-vivo-dot"></span>EN VIVO</span>` : ''}
         <button onclick="agendarPartido(MATCHES.find(x=>x.id===${m.id}));event.stopPropagation()" style="background:transparent;border:none;cursor:pointer;font-size:16px;padding:2px 6px;opacity:.6;transition:opacity .15s;margin-left:auto" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'" title="📆 Agendar en calendario">📆</button>
       </div>
       <div class="bet-teams">
         <div class="bt">${flag(m.codigo_local,m.local)}<span>${m.local}</span></div>
-        <div style="font-family:'Archivo Black',sans-serif;font-size:24px;padding:0 10px;color:${r?'var(--nodo)':'var(--grey)'}">
+        <div style="font-family:'Archivo Black',sans-serif;font-size:24px;padding:0 10px;color:${r?'var(--rojo)':'var(--grey)'}">
           ${r ? `${r.gl} – ${r.gv}` : (showEmpty ? '? – ?' : '– –')}
         </div>
         <div class="bt right"><span>${m.visitante}</span>${flag(m.codigo_vis,m.visitante)}</div>
       </div>
       ${r && r.gol && r.gol.trim() ? `<div class="goleadores-row">⚽ ${r.gol}</div>` : ''}
-      ${live&&!r ? '<div class="live-strip"></div>' : ''}
+      ${live ? '<div class="live-strip"></div>' : ''}
     </div>`;
   };
 
@@ -679,15 +680,14 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
 sb.channel('resultados-live')
   .on('postgres_changes', { event: '*', schema: 'public', table: 'resultados' }, payload => {
     if (payload.new) RESULTADOS[payload.new.partido_id] = { gl: payload.new.goles_local, gv: payload.new.goles_vis, gol: payload.new.goleadores||'' };
-    // Actualiza apuestas si ese tab está activo
+    if (payload.eventType === 'DELETE' && payload.old) delete RESULTADOS[payload.old.partido_id];
+    // Actualiza el tab activo
     if (document.querySelector('[data-tab="apuestas"].on')) renderBets();
-    // Actualiza resultados si está activo
     if (document.querySelector('[data-tab="resultados"].on')) renderRes();
-    // Actualiza tabla si está activa, o marca que hay cambios pendientes
-    if (document.querySelector('[data-tab="tabla"].on')) {
-      renderBoard();
-    } else {
-      // Muestra badge "nuevo resultado" en el tab tabla
+    // Siempre actualiza la tabla (aunque no esté visible, queda lista al instante)
+    renderBoard();
+    // Badge de notificación en el tab tabla si no está activo
+    if (!document.querySelector('[data-tab="tabla"].on')) {
       const tabBtn = document.querySelector('[data-tab="tabla"]');
       if (tabBtn && !tabBtn.querySelector('.badge')) {
         const b = document.createElement('span');

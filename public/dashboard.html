@@ -182,7 +182,7 @@ const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2,'0');
 const flag  = (c,l) => c ? `<img class="flag" src="https://flagcdn.com/w80/${c}.png" alt="${l||''}">` : `<div class="flag-tbd">${(l||'').slice(0,3)||'?'}</div>`;
 const started = m => new Date(m.fecha+'T'+m.hora+':00-05:00') <= new Date();
-const isLive  = m => { if (RESULTADOS[m.id]) return false; const s=new Date(m.fecha+'T'+m.hora+':00-05:00'),mins=(Date.now()-s)/60000; return mins>=0&&mins<130; };
+const isLive  = m => { const s=new Date(m.fecha+'T'+m.hora+':00-05:00'),mins=(Date.now()-s)/60000; return mins>=0&&mins<130; };
 const isCol   = m => m.codigo_local==='co' || m.codigo_vis==='co';
 const fmtDate = fecha => { const d=new Date(fecha+'T12:00:00-05:00'); return `${DAYS[d.getDay()].toUpperCase()} ${d.getDate()} ${MESES[d.getMonth()].toUpperCase()}`; };
 
@@ -247,12 +247,14 @@ function resCard(m) {
   const r   = RESULTADOS[m.id];
   const col = isCol(m);
   const live = isLive(m);
-  const scoreHtml = r
+  const scoreHtml = live && r
+    ? `<div class="r-score" style="display:flex;flex-direction:column;align-items:center;gap:3px;min-width:60px"><div>${r.gl}–${r.gv}</div><span class="en-vivo-badge"><span class="en-vivo-dot"></span>EN VIVO</span></div>`
+    : r
     ? `<div class="r-score">${r.gl}–${r.gv}</div>`
     : (live
         ? `<div class="r-score pending"><span class="en-vivo-badge"><span class="en-vivo-dot"></span>EN VIVO</span></div>`
         : `<div class="r-score pending">${m.hora}<br><span style="font-size:8px">COL</span></div>`);
-  return `<div class="res-card ${r?'has-result':''} ${col?'co':''}" style="${live&&!r?'border-color:var(--rojo);box-shadow:3px 3px 0 var(--rojo)':''}">
+  return `<div class="res-card ${r?'has-result':''} ${col?'co':''}" style="${live?'border-color:var(--rojo);box-shadow:3px 3px 0 var(--rojo)':''}">
     <div class="r-top">
       <span class="etapa">${m.etapa}</span>
       <span>P${m.id} · ${m.hora} COL · ${m.ciudad}</span>
@@ -357,12 +359,14 @@ function renderCalendar() {
       const col  = isCol(m);
       const play = started(m);
       const live = isLive(m);
-      const timeHtml = res
+      const timeHtml = live && res
+        ? `<div class="final-score" style="font-size:16px">${res.gl}–${res.gv}</div><span class="en-vivo-badge" style="font-size:8px;margin-top:2px"><span class="en-vivo-dot"></span>EN VIVO</span>`
+        : res
         ? `<div class="final-score">${res.gl}–${res.gv}</div><div class="final-label">Final</div>`
         : (live
             ? `<span class="en-vivo-badge" style="font-size:8px"><span class="en-vivo-dot"></span>EN VIVO</span>`
             : `<div class="hora">${m.hora}</div><div class="tz">COL</div>`);
-      return `<div class="match-row ${col?'colombia':''} ${play&&res?'played':''}" style="${live&&!res?'border-left:4px solid var(--rojo);background:rgba(206,17,38,.04)':''}">
+      return `<div class="match-row ${col?'colombia':''} ${play&&res&&!live?'played':''}" style="${live?'border-left:4px solid var(--rojo);background:rgba(206,17,38,.04)':''}">
         <div class="time-col">${timeHtml}</div>
         <div class="teams-col">
           <div class="team-line">${flag(m.codigo_local,m.local)} ${m.local}</div>

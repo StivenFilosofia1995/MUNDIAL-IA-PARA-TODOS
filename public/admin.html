@@ -76,6 +76,35 @@ input[type="number"],input[type="text"]{font-family:'Spline Sans Mono',monospace
 footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:14px 4vw;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
 .loading{text-align:center;padding:40px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--grey)}
 @keyframes livepulse{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* TABLERO EN VIVO */
+.live-board{background:var(--nodo);padding:20px 4vw 24px;border-bottom:4px solid var(--amarillo)}
+.live-board-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.live-board-head h2{font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--amarillo);letter-spacing:-.01em}
+.live-board-head .live-dot{width:10px;height:10px;background:var(--rojo);border-radius:50%;animation:livepulse 1s infinite;flex:none}
+.live-board-head .last-upd{font-family:'Spline Sans Mono',monospace;font-size:9px;color:rgba(255,255,255,.35);margin-left:auto;letter-spacing:.1em;text-transform:uppercase}
+.podio-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:900px;margin-bottom:16px}
+.podio-card{border:2px solid rgba(255,255,255,.15);padding:14px 12px;text-align:center;position:relative;transition:all .3s}
+.podio-card.pos-1{background:rgba(252,209,22,.18);border-color:var(--amarillo);box-shadow:0 0 16px rgba(252,209,22,.25)}
+.podio-card.pos-2{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.35)}
+.podio-card.pos-3{background:rgba(206,17,38,.12);border-color:rgba(206,17,38,.4)}
+.podio-medal{font-size:26px;line-height:1;margin-bottom:6px}
+.podio-name{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--blanco);line-height:1.15;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.podio-pts{font-family:'Archivo Black',sans-serif;font-size:24px;color:var(--amarillo);line-height:1}
+.podio-sub{font-family:'Spline Sans Mono',monospace;font-size:10px;color:rgba(255,255,255,.55);margin-top:4px;line-height:1.6}
+.podio-pesos{font-family:'Spline Sans Mono',monospace;font-size:12px;font-weight:700;color:#4ade80;margin-top:4px}
+.ltable{width:100%;max-width:900px;border-collapse:collapse}
+.ltable th{font-family:'Spline Sans Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.4);padding:5px 10px;text-align:left;border-bottom:1px solid rgba(255,255,255,.1)}
+.ltable td{padding:7px 10px;font-size:12px;color:rgba(255,255,255,.85);border-bottom:1px solid rgba(255,255,255,.05)}
+.ltable td.r,.ltable th.r{text-align:right;font-family:'Spline Sans Mono',monospace}
+.ltable tr.pos-1 td{background:rgba(252,209,22,.08)}
+.ltable tr.pos-2 td{background:rgba(255,255,255,.03)}
+.ltable tr.pos-3 td{background:rgba(206,17,38,.05)}
+.ltable .money-col{color:#4ade80;font-weight:700}
+.ltable .dim{color:rgba(255,255,255,.3)}
+.manual-head{display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap;padding-bottom:10px;border-bottom:2px solid rgba(0,17,102,.15)}
+.manual-badge{background:var(--amarillo);color:var(--nodo);font-family:'Spline Sans Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;padding:3px 10px}
+@media(max-width:600px){.podio-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -112,6 +141,17 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:14px 4vw;font-f
     </div>
   </header>
 
+  <!-- TABLERO EN VIVO -->
+  <div class="live-board" id="liveBoard">
+    <div class="live-board-head">
+      <div class="live-dot"></div>
+      <h2>TABLERO EN VIVO — ¿QUIÉN VA GANANDO?</h2>
+      <span class="last-upd" id="lastUpd">Cargando…</span>
+    </div>
+    <div class="podio-row" id="podioGrid"></div>
+    <table class="ltable" id="liveTable"></table>
+  </div>
+
   <div class="toolbar">
     <select id="resStage"><option value="">TODAS LAS FASES</option></select>
     <button class="btn primary" id="btnSyncESPN" onclick="syncESPN()">🔄 Sincronizar ESPN</button>
@@ -119,8 +159,12 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:14px 4vw;font-f
   </div>
 
   <main>
-    <h2>Resultados oficiales</h2>
-    <p class="note">INGRESA MARCADOR Y GOLEADORES — SE GUARDA AUTOMÁTICO · BORRÓN EN ROJO POR SI TE EQUIVOCAS</p>
+    <div class="manual-head">
+      <h2>Ingreso manual de marcadores</h2>
+      <span class="manual-badge">✏️ Fallback si ESPN falla</span>
+      <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--grey)">Se guarda automático · impacta tabla y polla en tiempo real</span>
+    </div>
+    <p class="note">ESCRIBE EL MARCADOR Y GOLEADORES — SE GUARDA AUTOMÁTICO AL ESCRIBIR · BORRÓN EN ROJO POR SI TE EQUIVOCAS</p>
     <div class="bets-grid" id="resGrid"><div class="loading">Cargando partidos…</div></div>
   </main>
 
@@ -190,6 +234,7 @@ async function init() {
   $('resStage').onchange = renderRes;
 
   renderRes();
+  loadLeaderboard();
 
   // Realtime: actualizar cuando ESPN/alguien guarda un resultado
   sb.channel('admin-resultados')
@@ -291,13 +336,64 @@ window.syncESPN = async () => {
     status.textContent = `✓ ${updated} actualizado${updated !== 1 ? 's' : ''} · ${now}`;
     btn.textContent = `✓ ${updated} actualizados`;
     setTimeout(() => { btn.textContent = '🔄 Sincronizar ESPN'; btn.disabled = false; }, 3000);
-    if (updated > 0) renderRes();
+    if (updated > 0) { renderRes(); loadLeaderboard(); }
   } catch (e) {
     status.textContent = `✗ Error: ${e.message}`;
     btn.textContent = '✗ Error'; btn.disabled = false;
     setTimeout(() => { btn.textContent = '🔄 Sincronizar ESPN'; }, 3000);
   }
 };
+
+// ── TABLERO EN VIVO ────────────────────────────────
+const fmtPesos = p => '$' + new Intl.NumberFormat('es-CO').format(p || 0);
+
+async function loadLeaderboard() {
+  const { data, error } = await sb.from('v_tabla').select('*');
+  const now = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  $('lastUpd').textContent = `Última actualización: ${now}`;
+
+  if (error || !data || !data.length) {
+    $('podioGrid').innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:12px;font-family:monospace;grid-column:1/-1">Sin datos — ejecuta el schema.sql en Supabase.</div>';
+    return;
+  }
+
+  const medals = ['🥇', '🥈', '🥉'];
+  const posClass = ['pos-1', 'pos-2', 'pos-3'];
+
+  // Podio top 3
+  $('podioGrid').innerHTML = data.slice(0, 3).map((r, i) => `
+    <div class="podio-card ${posClass[i]}">
+      <div class="podio-medal">${medals[i]}</div>
+      <div class="podio-name" title="${r.nombre_completo}">${r.nombre_completo}</div>
+      <div class="podio-pts">${r.puntos} <span style="font-size:14px">PTS</span></div>
+      <div class="podio-pesos">💰 ${fmtPesos(r.pesos)}</div>
+      <div class="podio-sub">${r.exactos} exactos · ${r.aciertos} aciertos<br>${r.evaluados} partidos evaluados</div>
+    </div>
+  `).join('');
+
+  // Tabla completa
+  $('liveTable').innerHTML =
+    `<tr><th>#</th><th>Participante</th><th class="r">Pts</th><th class="r">Exactos</th><th class="r">Aciertos</th><th class="r">Eval.</th><th class="r">💰 Pesos acum.</th></tr>` +
+    data.map((r, i) => {
+      const enPremio = i < 3;
+      return `<tr class="${i < 3 ? posClass[i] : ''}">
+        <td><b>${medals[i] || (i + 1)}</b></td>
+        <td><b>${r.nombre_completo}</b></td>
+        <td class="r"><b>${r.puntos}</b></td>
+        <td class="r">${r.exactos}</td>
+        <td class="r">${r.aciertos}</td>
+        <td class="r dim">${r.evaluados}</td>
+        <td class="r ${enPremio ? 'money-col' : 'dim'}">${fmtPesos(r.pesos)}</td>
+      </tr>`;
+    }).join('');
+}
+
+// Realtime: actualizar tablero cada vez que llega un resultado nuevo
+sb.channel('admin-tablero-live')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'resultados' }, () => {
+    loadLeaderboard();
+  })
+  .subscribe();
 </script>
 </body>
 </html>
