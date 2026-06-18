@@ -133,6 +133,42 @@ header{background:var(--nodo);color:var(--blanco);padding:14px 4vw;display:flex;
 .bracket-title{font-size:14px;font-weight:900;color:var(--amarillo)}
 .bracket-sub{font-size:10px;color:rgba(255,255,255,.55);margin-top:2px}
 .bracket-status{font-size:10px;font-weight:700;padding:3px 10px;flex:none}
+
+/* ── MOBILE ─────────────────────────────────────── */
+@media(max-width:600px){
+  /* header compacto */
+  header{padding:10px 4vw;gap:8px}
+  .head-polla{font-size:16px}
+  .head-admin{display:none}
+  .admin-badge{display:none}
+  .code-chip{font-size:11px;padding:3px 8px;letter-spacing:.12em}
+  .head-right{gap:6px}
+  .btn-ghost{padding:6px 10px;font-size:10px}
+  /* tabs */
+  .tab{padding:12px 14px;font-size:11px;letter-spacing:.04em}
+  /* content */
+  .tab-content{padding:16px 4vw 40px}
+  .section-title{font-size:17px}
+  /* podio */
+  .podio-row{grid-template-columns:1fr}
+  .podio-card{padding:14px 12px}
+  /* partidos */
+  .bets-grid{grid-template-columns:1fr}
+  .toolbar{padding:10px}
+  .toolbar select{font-size:11px;padding:6px 8px}
+  .sync-status{width:100%;text-align:center;margin:4px 0 0}
+  /* miembros */
+  .add-member-form{padding:14px}
+  .form-row{grid-template-columns:1fr 1fr}
+  .members-table td,.members-table th{padding:8px 10px;font-size:12px}
+  /* bracket */
+  .bracket-head{flex-direction:column;gap:6px}
+  .bracket-head>div{width:100%}
+}
+@media(max-width:400px){
+  .form-row{grid-template-columns:1fr}
+  .field input{font-size:16px}  /* prevent iOS zoom */
+}
 </style>
 </head>
 <body>
@@ -174,8 +210,8 @@ header{background:var(--nodo);color:var(--blanco);padding:14px 4vw;display:flex;
     <span class="section-note" style="margin:0" id="lastUpd">Cargando…</span>
   </div>
   <div class="podio-row" id="podioGrid"><div class="loading">Cargando…</div></div>
-  <div style="overflow-x:auto">
-    <table class="ltable" id="liveTable"></table>
+  <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+    <table class="ltable" id="liveTable" style="min-width:480px"></table>
   </div>
 </div>
 

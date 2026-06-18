@@ -761,6 +761,57 @@ app.delete('/api/pollas/:pollaId/miembros/:miembroId', async (req, res) => {
   res.json({ ok: true });
 });
 
+// ── SUPER ADMIN: monitoreo global de todas las pollas ────────────
+const SUPER_PASS = process.env.SUPER_ADMIN_PASS || 'mundialsuper2026';
+
+function superAuth(req, res, next) {
+  const p = req.headers['x-super-pass'] || req.query._sp;
+  if (p !== SUPER_PASS) return res.status(401).json({ error: 'No autorizado' });
+  next();
+}
+
+// Resumen global: pollas + conteo de miembros en una sola llamada
+app.get('/api/super/overview', superAuth, async (req, res) => {
+  const [pollas, miembros, resultados, apuestas] = await Promise.all([
+    sbRest('/pollas?select=id,nombre,codigo_invite,activa,max_miembros,created_at&order=created_at.desc&limit=500'),
+    sbRest('/polla_miembros?select=id,polla_id,nombre,apellido,es_admin&limit=15000'),
+    sbRest('/resultados?select=id&limit=500'),
+    sbRest('/apuestas?select=id&limit=500'),
+  ]);
+
+  const pollasConInfo = (pollas || []).map(p => {
+    const ms = (miembros || []).filter(m => m.polla_id === p.id);
+    const admin = ms.find(m => m.es_admin);
+    return {
+      ...p,
+      miembro_count: ms.length,
+      admin_nombre: admin ? `${admin.nombre} ${admin.apellido}` : '—',
+    };
+  });
+
+  res.json({
+    total_pollas: (pollas || []).length,
+    total_miembros: (miembros || []).length,
+    total_resultados: (resultados || []).length,
+    total_apuestas: (apuestas || []).length,
+    pollas: pollasConInfo,
+  });
+});
+
+// Tablero de una polla específica
+app.get('/api/super/pollas/:id/tablero', superAuth, async (req, res) => {
+  const data = await sbRest(`/v_tabla_polla?polla_id=eq.${req.params.id}&select=*&order=puntos.desc`);
+  res.json(data || []);
+});
+
+// Activar / desactivar polla
+app.patch('/api/super/pollas/:id', superAuth, async (req, res) => {
+  const { activa } = req.body || {};
+  if (typeof activa !== 'boolean') return res.status(400).json({ error: 'activa debe ser boolean' });
+  await sbRest(`/pollas?id=eq.${req.params.id}`, 'PATCH', { activa });
+  res.json({ ok: true });
+});
+
 // ── Static files y SPA fallback ──────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));

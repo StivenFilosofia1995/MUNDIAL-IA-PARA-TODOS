@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Admin — Polla Mundialista 2026</title>
+<style>
+:root{
+  --nodo:#001166;--amarillo:#FCD116;--rojo:#CE1126;
+  --blanco:#fff;--paper:#f4f6fb;--card:#fff;--grey:#6b7280;--ink:#0a0e1a;
+  --green:#16a34a;--green-bg:#f0fdf4;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#080e2e;color:var(--blanco);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;background:#080e2e;display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
+.login-box{background:rgba(255,255,255,.04);border:2px solid rgba(252,209,22,.3);padding:40px 32px;width:100%;max-width:380px;text-align:center}
+.login-icon{font-size:48px;margin-bottom:16px}
+.login-title{font-size:22px;font-weight:900;color:var(--amarillo);letter-spacing:-.01em;margin-bottom:4px}
+.login-sub{font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase;margin-bottom:28px}
+.login-input{width:100%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.15);color:var(--blanco);font-size:15px;padding:13px 16px;outline:none;letter-spacing:.05em;margin-bottom:12px;font-family:monospace}
+.login-input:focus{border-color:var(--amarillo)}
+.login-input::placeholder{color:rgba(255,255,255,.25)}
+.login-btn{width:100%;background:var(--amarillo);color:var(--nodo);border:none;font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;padding:13px;cursor:pointer;transition:all .15s}
+.login-btn:hover{background:#e8c010}
+.login-error{color:#f87171;font-size:12px;margin-top:10px;display:none}
+.login-error.show{display:block}
+
+/* HEADER */
+.tricolor{height:4px;background:linear-gradient(90deg,var(--amarillo) 0 40%,var(--nodo) 40% 70%,var(--rojo) 70% 100%)}
+header{background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.08);padding:14px 4vw;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.h-title{font-size:18px;font-weight:900;color:var(--amarillo)}
+.h-sub{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.1em;text-transform:uppercase}
+.h-right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn-outline{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;background:transparent;color:rgba(255,255,255,.6);border:1.5px solid rgba(255,255,255,.2);padding:7px 14px;cursor:pointer;transition:all .15s}
+.btn-outline:hover{border-color:var(--amarillo);color:var(--amarillo)}
+.btn-yellow{background:var(--amarillo);color:var(--nodo);border:none;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;padding:8px 16px;cursor:pointer;transition:all .15s}
+.btn-yellow:hover{background:#e8c010}
+.btn-danger{background:var(--rojo);color:var(--blanco);border:none;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:5px 12px;cursor:pointer}
+.btn-xs{padding:4px 8px;font-size:9px}
+
+/* STATS CARDS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:24px 4vw;max-width:1200px;margin:0 auto}
+@media(max-width:640px){.stats-row{grid-template-columns:1fr 1fr;gap:10px;padding:16px 4vw}}
+.stat-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:18px 16px;text-align:center}
+.stat-val{font-size:36px;font-weight:900;color:var(--amarillo);line-height:1;margin-bottom:6px}
+.stat-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.4)}
+@media(max-width:400px){.stat-val{font-size:28px}}
+
+/* MAIN CONTENT */
+.content{padding:0 4vw 60px;max-width:1200px;margin:0 auto}
+.section-hd{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.section-hd h2{font-size:16px;font-weight:900;color:var(--amarillo);letter-spacing:-.01em}
+.count-badge{background:rgba(252,209,22,.12);border:1px solid rgba(252,209,22,.25);color:var(--amarillo);font-size:11px;font-weight:700;padding:2px 10px;border-radius:100px}
+.refresh-btn{margin-left:auto;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);padding:6px 14px;cursor:pointer;transition:all .15s}
+.refresh-btn:hover{border-color:var(--amarillo);color:var(--amarillo)}
+
+/* POLLAS TABLE */
+.pollas-table{width:100%;border-collapse:collapse}
+.pollas-table th{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);padding:8px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.08)}
+.pollas-table td{padding:0}
+.pollas-row{border-bottom:1px solid rgba(255,255,255,.05)}
+.pollas-row:hover .row-main{background:rgba(255,255,255,.03)}
+.row-main{display:grid;grid-template-columns:2fr 1fr 1.5fr 80px 70px 120px 100px;align-items:center;padding:12px 14px;gap:10px;cursor:pointer;transition:background .15s}
+@media(max-width:900px){.row-main{grid-template-columns:2fr 1fr 1fr 70px 90px}}
+@media(max-width:600px){.row-main{grid-template-columns:1fr auto;flex-wrap:wrap;display:flex;gap:8px}}
+.p-name{font-size:14px;font-weight:700;color:var(--blanco);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p-code{font-size:12px;font-weight:900;letter-spacing:.15em;color:var(--amarillo);font-family:monospace}
+.p-admin{font-size:12px;color:rgba(255,255,255,.5);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p-members{font-size:13px;font-weight:700;color:rgba(255,255,255,.8);text-align:center}
+.p-date{font-size:10px;color:rgba(255,255,255,.3);text-align:right}
+.p-actions{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+.pill-activa{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:2px 8px;border-radius:100px;cursor:pointer;border:none;transition:all .15s}
+.pill-activa.on{background:rgba(22,163,74,.2);color:#4ade80;border:1px solid rgba(22,163,74,.4)}
+.pill-activa.off{background:rgba(206,17,38,.2);color:#f87171;border:1px solid rgba(206,17,38,.4)}
+
+/* EXPAND ROW (tablero) */
+.row-expand{display:none;padding:0 14px 14px;border-bottom:1px solid rgba(255,255,255,.05)}
+.row-expand.open{display:block}
+.mini-tablero{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);padding:12px}
+.mini-tablero table{width:100%;border-collapse:collapse;font-size:12px}
+.mini-tablero th{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.3);padding:5px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,.06)}
+.mini-tablero td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.04);color:rgba(255,255,255,.8)}
+.mini-tablero .pts{font-weight:900;color:var(--amarillo)}
+.mini-tablero .r{text-align:right}
+.expand-loading{text-align:center;padding:20px;font-size:11px;color:rgba(255,255,255,.3)}
+
+/* MISC */
+.loading{text-align:center;padding:60px;font-size:12px;color:rgba(255,255,255,.3)}
+.empty{text-align:center;padding:40px;font-size:13px;color:rgba(255,255,255,.3)}
+.tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:2px 8px;border-radius:2px}
+
+@media(max-width:600px){
+  .pollas-table thead{display:none}
+  .p-date,.p-admin{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-icon">🔭</div>
+    <div class="login-title">SUPER ADMIN</div>
+    <div class="login-sub">Monitoreo global · Polla Mundialista 2026</div>
+    <input class="login-input" type="password" id="passIn" placeholder="Contraseña de acceso"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">Acceder →</button>
+    <div class="login-error" id="loginErr">Contraseña incorrecta</div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="panel" style="display:none">
+  <div class="tricolor"></div>
+  <header>
+    <div>
+      <div class="h-title">🔭 SUPER ADMIN</div>
+      <div class="h-sub">Polla Mundialista 2026 · Monitoreo global</div>
+    </div>
+    <div class="h-right">
+      <button class="btn-yellow" onclick="loadData()">↻ Refrescar</button>
+      <button class="btn-outline" onclick="doLogout()">Salir</button>
+    </div>
+  </header>
+
+  <!-- STATS -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card"><div class="stat-val" id="sTotalPollas">—</div><div class="stat-lbl">Pollas activas</div></div>
+    <div class="stat-card"><div class="stat-val" id="sTotalMiembros">—</div><div class="stat-lbl">Participantes</div></div>
+    <div class="stat-card"><div class="stat-val" id="sTotalResultados">—</div><div class="stat-lbl">Resultados</div></div>
+    <div class="stat-card"><div class="stat-val" id="sTotalApuestas">—</div><div class="stat-lbl">Apuestas</div></div>
+  </div>
+
+  <!-- POLLAS LIST -->
+  <div class="content">
+    <div class="section-hd">
+      <h2>⚽ Todas las pollas</h2>
+      <span class="count-badge" id="pollasCount">—</span>
+      <span style="font-size:11px;color:rgba(255,255,255,.35);margin-left:4px">Haz click en una fila para ver el tablero</span>
+    </div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table class="pollas-table" id="pollasTable">
+        <thead>
+          <tr>
+            <th>Polla</th>
+            <th>Código</th>
+            <th>Admin</th>
+            <th style="text-align:center">Miembros</th>
+            <th>Estado</th>
+            <th style="text-align:right">Creada</th>
+            <th style="text-align:right">Acción</th>
+          </tr>
+        </thead>
+        <tbody id="pollasBody">
+          <tr><td colspan="7" class="loading">Cargando pollas…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const SP_KEY = 'super-admin-pass';
+let superPass = '';
+
+function doLogin() {
+  const p = document.getElementById('passIn').value.trim();
+  if (!p) return;
+  // Verify against server
+  fetch('/api/super/overview', { headers: { 'x-super-pass': p } })
+    .then(r => {
+      if (r.status === 401) {
+        document.getElementById('loginErr').classList.add('show');
+        document.getElementById('passIn').value = '';
+        return null;
+      }
+      return r.json();
+    })
+    .then(data => {
+      if (!data) return;
+      superPass = p;
+      sessionStorage.setItem(SP_KEY, p);
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('panel').style.display = 'block';
+      renderData(data);
+    })
+    .catch(() => { document.getElementById('loginErr').classList.add('show'); });
+}
+
+function doLogout() {
+  sessionStorage.removeItem(SP_KEY);
+  location.reload();
+}
+
+// Auto-login if session exists
+const savedPass = sessionStorage.getItem(SP_KEY);
+if (savedPass) {
+  superPass = savedPass;
+  document.getElementById('passIn').value = savedPass;
+  doLogin();
+}
+
+async function loadData() {
+  document.getElementById('pollasBody').innerHTML = '<tr><td colspan="7" class="loading">Cargando…</td></tr>';
+  try {
+    const r = await fetch('/api/super/overview', { headers: { 'x-super-pass': superPass } });
+    if (!r.ok) { doLogout(); return; }
+    renderData(await r.json());
+  } catch(e) {
+    document.getElementById('pollasBody').innerHTML = `<tr><td colspan="7" class="empty">Error al cargar: ${e.message}</td></tr>`;
+  }
+}
+
+function renderData(data) {
+  const { total_pollas=0, total_miembros=0, total_resultados=0, total_apuestas=0, pollas=[] } = data;
+
+  document.getElementById('sTotalPollas').textContent = pollas.filter(p=>p.activa).length;
+  document.getElementById('sTotalMiembros').textContent = total_miembros;
+  document.getElementById('sTotalResultados').textContent = total_resultados;
+  document.getElementById('sTotalApuestas').textContent = total_apuestas;
+  document.getElementById('pollasCount').textContent = `${total_pollas} en total`;
+
+  if (!pollas.length) {
+    document.getElementById('pollasBody').innerHTML = '<tr><td colspan="7" class="empty">No hay pollas creadas aún.</td></tr>';
+    return;
+  }
+
+  const fmtDate = s => s ? new Date(s).toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'2-digit'}) : '—';
+
+  document.getElementById('pollasBody').innerHTML = pollas.map(p => `
+    <tr class="pollas-row" id="prow-${p.id}">
+      <td>
+        <div class="row-main" onclick="toggleTablero('${p.id}')">
+          <div>
+            <div class="p-name">${escHtml(p.nombre)}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:2px">${p.miembro_count}/${p.max_miembros} miembros</div>
+          </div>
+          <div class="p-code">${p.codigo_invite}</div>
+          <div class="p-admin">${escHtml(p.admin_nombre)}</div>
+          <div class="p-members">${p.miembro_count}<span style="font-size:10px;color:rgba(255,255,255,.3)">/${p.max_miembros}</span></div>
+          <div>
+            <button class="pill-activa ${p.activa?'on':'off'}" onclick="event.stopPropagation();toggleActiva('${p.id}',${!p.activa})" title="${p.activa?'Desactivar':'Activar'} polla">
+              ${p.activa ? '● ACTIVA' : '○ INACTIVA'}
+            </button>
+          </div>
+          <div class="p-date">${fmtDate(p.created_at)}</div>
+          <div class="p-actions">
+            <button class="btn-yellow btn-xs" onclick="event.stopPropagation();toggleTablero('${p.id}')">Ver tablero</button>
+          </div>
+        </div>
+        <div class="row-expand" id="expand-${p.id}">
+          <div class="mini-tablero" id="tablero-${p.id}">
+            <div class="expand-loading">Cargando tablero…</div>
+          </div>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function escHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+const expandedCache = {};
+async function toggleTablero(pollaId) {
+  const el = document.getElementById('expand-' + pollaId);
+  const isOpen = el.classList.contains('open');
+  // Close all others
+  document.querySelectorAll('.row-expand.open').forEach(e => e.classList.remove('open'));
+  if (isOpen) return;
+  el.classList.add('open');
+  if (expandedCache[pollaId]) {
+    document.getElementById('tablero-' + pollaId).innerHTML = expandedCache[pollaId];
+    return;
+  }
+  try {
+    const r = await fetch(`/api/super/pollas/${pollaId}/tablero`, { headers: { 'x-super-pass': superPass } });
+    const data = await r.json();
+    const html = renderMiniTablero(data);
+    expandedCache[pollaId] = html;
+    document.getElementById('tablero-' + pollaId).innerHTML = html;
+  } catch(e) {
+    document.getElementById('tablero-' + pollaId).innerHTML = `<div class="expand-loading">Error: ${e.message}</div>`;
+  }
+}
+
+function renderMiniTablero(rows) {
+  if (!rows?.length) return '<div class="expand-loading">Sin apuestas registradas aún.</div>';
+  const medals = ['🥇','🥈','🥉'];
+  return `<table>
+    <thead><tr><th>#</th><th>Participante</th><th class="r">Pts</th><th class="r">Exactos</th><th class="r">Aciertos</th><th class="r">Eval.</th></tr></thead>
+    <tbody>${rows.map((r,i)=>`<tr>
+      <td>${medals[i]||(i+1)}</td>
+      <td>${escHtml(r.nombre_completo)}</td>
+      <td class="r pts">${r.puntos}</td>
+      <td class="r">${r.exactos}</td>
+      <td class="r">${r.aciertos}</td>
+      <td class="r" style="color:rgba(255,255,255,.4)">${r.evaluados}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+async function toggleActiva(pollaId, nuevaActiva) {
+  const pill = document.querySelector(`#prow-${pollaId} .pill-activa`);
+  if (pill) { pill.disabled = true; pill.textContent = '…'; }
+  try {
+    await fetch(`/api/super/pollas/${pollaId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'x-super-pass': superPass },
+      body: JSON.stringify({ activa: nuevaActiva })
+    });
+    // Reload data to refresh
+    delete expandedCache[pollaId];
+    await loadData();
+  } catch(e) {
+    alert('Error: ' + e.message);
+    if (pill) { pill.disabled = false; }
+  }
+}
+
+document.getElementById('passIn')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+</script>
+</body>
+</html>
