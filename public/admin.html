@@ -3,586 +3,581 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ADMIN — Polla NODO 2026</title>
+<title>Admin — Polla Mundialista 2026</title>
 <script src="/config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600;700&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --nodo:#001166;--nodo-mid:#0022aa;--amarillo:#FCD116;--rojo:#CE1126;
-  --blanco:#ffffff;--paper:#f4f6fb;--card:#ffffff;--grey:#6b7280;--ink:#0a0e1a;
+  --blanco:#ffffff;--paper:#f4f6fb;--card:#ffffff;--grey:#6b7280;--ink:#0a0e1a;--green:#16a34a;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--paper);color:var(--ink);font-family:'Archivo',sans-serif}
+body{background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh}
 .tricolor{height:5px;background:linear-gradient(90deg,var(--amarillo) 0 40%,var(--nodo) 40% 70%,var(--rojo) 70% 100%)}
 
-/* LOGIN */
-#login-screen{position:fixed;inset:0;z-index:100;background:var(--nodo);display:flex;align-items:center;justify-content:center}
-.login-box{text-align:center;padding:40px;border:3px solid var(--amarillo);box-shadow:8px 8px 0 rgba(0,0,0,.3);background:rgba(255,255,255,.05);max-width:360px;width:90%}
-.login-box .logo{font-family:'Archivo Black',sans-serif;font-size:28px;color:var(--blanco);letter-spacing:-.01em;margin-bottom:4px}
-.login-box .logo em{color:var(--amarillo);font-style:normal}
-.login-box .sub{font-family:'Spline Sans Mono',monospace;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.2em;text-transform:uppercase;margin-bottom:28px}
-.login-box .lock{font-size:36px;margin-bottom:16px}
-#passInput{font-family:monospace;font-size:15px;border:2px solid var(--amarillo);padding:12px 14px;background:rgba(255,255,255,.1);color:var(--blanco);width:100%;border-radius:2px;outline:none;margin-bottom:12px;letter-spacing:.05em}
-#passInput::placeholder{color:rgba(255,255,255,.3);letter-spacing:.02em}
-#btnLogin{font-family:'Spline Sans Mono',monospace;font-size:12px;font-weight:700;background:var(--amarillo);color:var(--nodo);border:none;padding:13px 16px;cursor:pointer;width:100%;text-transform:uppercase;letter-spacing:.1em;box-shadow:4px 4px 0 rgba(0,0,0,.2);transition:all .15s}
-#btnLogin:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 rgba(0,0,0,.25)}
-#loginError{color:#ffb3ba;font-family:monospace;font-size:11px;margin-top:12px;display:none;letter-spacing:.04em}
-.login-back{font-family:monospace;font-size:11px;color:rgba(255,255,255,.3);margin-top:20px;cursor:pointer;text-decoration:underline;display:block}
-.login-back:hover{color:rgba(255,255,255,.6)}
-
 /* HEADER */
-header{background:var(--nodo);color:var(--blanco);padding:14px 4vw;display:flex;align-items:center;gap:14px;border-bottom:4px solid var(--amarillo);flex-wrap:wrap}
-.nodo-icon{width:36px;height:36px;background:var(--blanco);border-radius:3px;display:flex;align-items:center;justify-content:center;flex:none}
-.nodo-icon svg{width:24px;height:24px}
-.head-title{font-family:'Archivo Black',sans-serif;font-size:clamp(16px,2.5vw,24px);color:var(--blanco);letter-spacing:-.01em}
-.head-title em{color:var(--amarillo);font-style:normal}
-.admin-badge{background:var(--rojo);color:var(--blanco);font-family:'Spline Sans Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;padding:3px 10px;border-radius:2px}
-.head-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.btn{font-family:'Spline Sans Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;border:2px solid var(--nodo);background:var(--card);color:var(--nodo);padding:8px 14px;cursor:pointer;box-shadow:3px 3px 0 var(--nodo);transition:all .1s}
-.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--nodo)}
-.btn.primary{background:var(--amarillo)}
-.btn.danger{background:var(--rojo);border-color:var(--rojo);color:var(--blanco);box-shadow:3px 3px 0 rgba(0,0,0,.3)}
-.btn.blue{background:var(--nodo);color:var(--blanco);border-color:var(--nodo-mid)}
-.btn.blue:hover{box-shadow:4px 4px 0 rgba(0,0,30,.4)}
-.btn-logout{font-family:'Spline Sans Mono',monospace;font-size:11px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);border:1.5px solid rgba(255,255,255,.2);padding:7px 14px;cursor:pointer;border-radius:3px;transition:all .15s}
-.btn-logout:hover{background:rgba(255,255,255,.2)}
+header{background:var(--nodo);color:var(--blanco);padding:14px 4vw;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.head-main{display:flex;flex-direction:column;gap:2px}
+.head-polla{font-size:20px;font-weight:900;color:var(--amarillo);letter-spacing:-.01em}
+.head-admin{font-size:11px;color:rgba(255,255,255,.55);letter-spacing:.04em}
+.admin-badge{background:var(--rojo);color:var(--blanco);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;padding:3px 10px;flex:none;align-self:center}
+.code-chip{background:rgba(252,209,22,.12);border:1px solid rgba(252,209,22,.35);color:var(--amarillo);font-size:13px;font-weight:900;letter-spacing:.2em;padding:4px 14px;font-family:monospace;cursor:pointer;transition:background .15s;align-self:center}
+.code-chip:hover{background:rgba(252,209,22,.25)}
+.head-right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn-ghost{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:1.5px solid rgba(255,255,255,.2);padding:7px 14px;cursor:pointer;transition:all .15s;text-decoration:none;display:inline-block}
+.btn-ghost:hover{background:rgba(255,255,255,.2);color:var(--blanco)}
 
-/* TOOLBAR */
-.toolbar{background:var(--blanco);border-bottom:2px solid rgba(0,17,102,.1);padding:12px 4vw;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:10}
-.toolbar select{font-family:'Spline Sans Mono',monospace;font-size:11px;border:2px solid var(--nodo);padding:7px 10px;background:var(--card);color:var(--ink);border-radius:0;outline:none}
-.sync-status{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--grey);margin-left:auto}
+/* TABS */
+.tabs{background:var(--blanco);border-bottom:3px solid var(--nodo);display:flex;overflow-x:auto;padding:0 4vw;position:sticky;top:0;z-index:20}
+.tab{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:14px 20px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-3px;white-space:nowrap;color:var(--grey);transition:all .15s;user-select:none}
+.tab:hover{color:var(--nodo)}
+.tab.active{color:var(--nodo);border-bottom-color:var(--amarillo)}
 
-/* GRID */
-main{padding:20px 4vw 80px;max-width:1240px;margin:0 auto}
-h2{font-family:'Archivo Black',sans-serif;font-size:22px;color:var(--nodo);margin-bottom:4px}
-.note{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--grey);margin-bottom:16px;letter-spacing:.06em;text-transform:uppercase}
-.bets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
-.bet-card{background:var(--card);border:2px solid var(--nodo);box-shadow:3px 3px 0 var(--nodo);padding:14px}
-.bet-card.saved{border-left:5px solid #15803d}
-.bet-card.saving{border-color:var(--amarillo);box-shadow:3px 3px 0 var(--amarillo)}
-.bet-top{display:flex;justify-content:space-between;align-items:center;font-family:'Spline Sans Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--grey);margin-bottom:10px;gap:6px}
+/* CONTENT */
+.tab-content{display:none;padding:28px 4vw 60px;max-width:1200px;margin:0 auto}
+.tab-content.active{display:block}
+.section-title{font-size:20px;font-weight:900;color:var(--nodo);margin-bottom:4px}
+.section-note{font-size:11px;color:var(--grey);margin-bottom:20px;text-transform:uppercase;letter-spacing:.07em}
+
+/* BUTTONS */
+.btn{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;border:2px solid;padding:8px 16px;cursor:pointer;transition:all .12s;display:inline-block}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--nodo);color:var(--blanco);border-color:var(--nodo)}
+.btn-primary:hover:not(:disabled){background:#000d44}
+.btn-danger{background:var(--rojo);color:var(--blanco);border-color:var(--rojo)}
+.btn-danger:hover:not(:disabled){background:#a50e1e}
+.btn-yellow{background:var(--amarillo);color:var(--nodo);border-color:var(--amarillo)}
+.btn-outline{background:transparent;border-color:var(--nodo);color:var(--nodo)}
+.btn-sm{padding:5px 12px;font-size:10px}
+.btn-xs{padding:3px 8px;font-size:9px}
+
+/* MESSAGES */
+.msg-error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
+.msg-error.show{display:block}
+.msg-ok{background:#f0fdf4;border:1px solid #86efac;color:var(--green);padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
+.msg-ok.show{display:block}
+.loading{text-align:center;padding:40px;font-size:12px;color:var(--grey)}
+
+/* LEADERBOARD */
+.podio-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:600px){.podio-row{grid-template-columns:1fr}}
+.podio-card{background:var(--nodo);border:2px solid rgba(255,255,255,.12);padding:16px 14px;text-align:center}
+.podio-card.pos-1{border-color:var(--amarillo);box-shadow:0 0 20px rgba(252,209,22,.2)}
+.podio-card.pos-2{border-color:rgba(255,255,255,.3)}
+.podio-card.pos-3{border-color:rgba(206,17,38,.5)}
+.podio-medal{font-size:28px;line-height:1;margin-bottom:8px}
+.podio-name{font-size:14px;font-weight:900;color:var(--blanco);margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.podio-pts{font-size:28px;font-weight:900;color:var(--amarillo);line-height:1}
+.podio-sub{font-size:10px;color:rgba(255,255,255,.45);margin-top:5px;line-height:1.6}
+.ltable{width:100%;border-collapse:collapse;background:var(--card);border:2px solid var(--nodo)}
+.ltable th{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--grey);padding:8px 12px;text-align:left;border-bottom:2px solid var(--nodo);background:var(--paper)}
+.ltable td{padding:10px 12px;border-bottom:1px solid #f0f0f0;font-size:13px}
+.ltable tr:hover td{background:#f8f9ff}
+.ltable .r{text-align:right;font-variant-numeric:tabular-nums}
+.ltable .pts{font-weight:900;color:var(--nodo);font-size:15px}
+.ltable .medal{font-size:16px}
+.last-upd-row{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+@keyframes livepulse{0%,100%{opacity:1}50%{opacity:.2}}
+.live-dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:livepulse 1.2s infinite;flex:none}
+
+/* PARTIDOS */
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px;background:var(--card);border:2px solid #e2e8f0;padding:12px 14px}
+.toolbar select{font-size:12px;border:2px solid var(--nodo);padding:7px 10px;background:var(--card);color:var(--ink);outline:none}
+.sync-status{font-size:11px;color:var(--grey);margin-left:auto}
+.bets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.bet-card{background:var(--card);border:2px solid var(--nodo);padding:14px;position:relative}
+.bet-card.saved{border-left:5px solid var(--green)}
+.bet-card.saving{border-color:var(--amarillo)}
+.bet-top{display:flex;justify-content:space-between;align-items:center;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--grey);margin-bottom:10px;gap:6px;flex-wrap:wrap}
 .stage{background:var(--nodo);color:var(--blanco);padding:2px 7px;font-size:9px;flex:none}
 .bet-teams{display:flex;align-items:center;justify-content:space-between;gap:6px}
-.bt{display:flex;align-items:center;gap:7px;font-weight:700;font-size:14px;min-width:0;flex:1}
+.bt{display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;min-width:0;flex:1}
 .bt span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bt.right{flex-direction:row-reverse;text-align:right}
-.score-in{width:44px;text-align:center;font-family:'Archivo Black',sans-serif;font-size:20px;padding:5px 2px;border:2px solid var(--nodo);background:var(--paper);flex:none}
-.score-sep{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--grey);flex:none;padding:0 2px}
-.flag{width:28px;height:20px;object-fit:cover;border:1px solid rgba(0,17,102,.2);flex:none;border-radius:1px}
-.flag-tbd{width:28px;height:20px;border:1px dashed var(--grey);display:inline-flex;align-items:center;justify-content:center;font-size:7px;flex:none;background:#e8eaf0;color:var(--grey)}
-.gol-input{font-family:'Spline Sans Mono',monospace !important;font-size:11px !important;border:1.5px solid rgba(0,17,102,.25) !important;background:#f8f9ff !important;padding:6px 10px !important;width:100%;display:block;margin-top:8px}
-input[type="number"],input[type="text"]{font-family:'Spline Sans Mono',monospace;font-size:12px;border:2px solid var(--nodo);padding:8px 10px;background:var(--card);color:var(--ink);border-radius:0;outline:none}
-footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:14px 4vw;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.loading{text-align:center;padding:40px;font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--grey)}
-@keyframes livepulse{0%,100%{opacity:1}50%{opacity:.2}}
-/* GOLEADORES BUILDER */
-.gol-builder{margin-top:8px}
-.gol-rows{display:flex;flex-direction:column;gap:5px}
-.gol-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;background:#f0f4ff;border:1px solid rgba(0,17,102,.12);padding:5px 7px}
-.gol-row .gol-name{flex:1;min-width:110px;font-family:'Spline Sans Mono',monospace;font-size:11px;border:1.5px solid rgba(0,17,102,.25);background:#fff;padding:3px 7px;color:var(--ink)}
-.gol-row .gol-min{width:50px;font-family:'Spline Sans Mono',monospace;font-size:11px;border:1.5px solid rgba(0,17,102,.25);background:#fff;padding:3px 5px;text-align:center;color:var(--ink)}
-.gol-chk{font-family:'Spline Sans Mono',monospace;font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;color:#374151}
-.gol-del{background:none;border:none;color:var(--rojo);cursor:pointer;font-size:16px;font-weight:700;line-height:1;padding:0 4px;flex:none}
-.btn-add-gol{font-family:'Spline Sans Mono',monospace;font-size:10px;font-weight:700;border:1.5px dashed rgba(0,17,102,.35);background:transparent;color:var(--nodo);padding:4px 10px;cursor:pointer;margin-top:5px;letter-spacing:.05em;width:100%}
+.score-in{width:42px;text-align:center;font-size:20px;font-weight:900;padding:4px 2px;border:2px solid var(--nodo);background:var(--paper);flex:none;outline:none}
+.score-sep{font-size:20px;font-weight:900;color:var(--grey);padding:0 2px}
+.flag{width:26px;height:18px;object-fit:cover;border:1px solid rgba(0,17,102,.18);flex:none}
+.flag-tbd{width:26px;height:18px;border:1px dashed var(--grey);display:inline-flex;align-items:center;justify-content:center;font-size:7px;flex:none;background:#e8eaf0;color:var(--grey)}
+.section-sep{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grey);margin:8px 0 4px;padding-top:8px;border-top:1px dashed rgba(0,17,102,.1);display:flex;align-items:center;gap:6px}
+.gol-rows,.card-rows{display:flex;flex-direction:column;gap:4px}
+.gol-row,.card-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap;background:#f0f4ff;border:1px solid rgba(0,17,102,.1);padding:4px 6px}
+.gol-row input,.card-row input{font-size:11px;border:1.5px solid rgba(0,17,102,.2);background:#fff;padding:3px 6px;color:var(--ink);outline:none}
+.gol-row .gol-name,.card-row .card-name{flex:1;min-width:100px}
+.gol-row .gol-min,.card-row .card-min{width:46px;text-align:center}
+.card-row select{font-size:11px;border:1.5px solid rgba(206,17,38,.2);background:#fff;padding:3px 4px;color:var(--ink);outline:none}
+.gol-chk{font-size:10px;display:flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap;color:#374151}
+.gol-del{background:none;border:none;color:var(--rojo);cursor:pointer;font-size:16px;font-weight:900;line-height:1;padding:0 3px}
+.btn-add-gol{font-size:10px;font-weight:700;border:1.5px dashed rgba(0,17,102,.3);background:transparent;color:var(--nodo);padding:4px 10px;cursor:pointer;margin-top:4px;width:100%;letter-spacing:.04em}
 .btn-add-gol:hover{background:#f0f4ff}
-/* TARJETAS BUILDER */
-.card-builder{margin-top:8px}
-.card-rows{display:flex;flex-direction:column;gap:5px}
-.card-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;background:#fff8f0;border:1px solid rgba(206,17,38,.18);padding:5px 7px}
-.card-row .card-name{flex:1;min-width:110px;font-family:'Spline Sans Mono',monospace;font-size:11px;border:1.5px solid rgba(206,17,38,.25);background:#fff;padding:3px 7px;color:var(--ink)}
-.card-row .card-min{width:50px;font-family:'Spline Sans Mono',monospace;font-size:11px;border:1.5px solid rgba(206,17,38,.25);background:#fff;padding:3px 5px;text-align:center;color:var(--ink)}
-.card-row .card-type{font-family:'Spline Sans Mono',monospace;font-size:11px;border:1.5px solid rgba(206,17,38,.25);background:#fff;padding:3px 5px;color:var(--ink);cursor:pointer}
-.section-sep{font-family:'Spline Sans Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grey);margin-top:10px;margin-bottom:4px;padding-top:8px;border-top:1px dashed rgba(0,17,102,.12);display:flex;align-items:center;gap:6px}
-.tc{display:inline-block;width:9px;height:13px;border-radius:1px;vertical-align:middle;flex:none;box-shadow:1px 1px 0 rgba(0,0,0,.28)}
+.tc{display:inline-block;width:8px;height:12px;border-radius:1px;vertical-align:middle}
 .tc-y{background:#FCD116}.tc-r{background:#CE1126}
 
-/* TABLERO EN VIVO */
-.live-board{background:var(--nodo);padding:20px 4vw 24px;border-bottom:4px solid var(--amarillo)}
-.live-board-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
-.live-board-head h2{font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--amarillo);letter-spacing:-.01em}
-.live-board-head .live-dot{width:10px;height:10px;background:var(--rojo);border-radius:50%;animation:livepulse 1s infinite;flex:none}
-.live-board-head .last-upd{font-family:'Spline Sans Mono',monospace;font-size:9px;color:rgba(255,255,255,.35);margin-left:auto;letter-spacing:.1em;text-transform:uppercase}
-.podio-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:900px;margin-bottom:16px}
-.podio-card{border:2px solid rgba(255,255,255,.15);padding:14px 12px;text-align:center;position:relative;transition:all .3s}
-.podio-card.pos-1{background:rgba(252,209,22,.18);border-color:var(--amarillo);box-shadow:0 0 16px rgba(252,209,22,.25)}
-.podio-card.pos-2{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.35)}
-.podio-card.pos-3{background:rgba(206,17,38,.12);border-color:rgba(206,17,38,.4)}
-.podio-medal{font-size:26px;line-height:1;margin-bottom:6px}
-.podio-name{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--blanco);line-height:1.15;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.podio-pts{font-family:'Archivo Black',sans-serif;font-size:24px;color:var(--amarillo);line-height:1}
-.podio-sub{font-family:'Spline Sans Mono',monospace;font-size:10px;color:rgba(255,255,255,.55);margin-top:4px;line-height:1.6}
-.podio-pesos{font-family:'Spline Sans Mono',monospace;font-size:12px;font-weight:700;color:#4ade80;margin-top:4px}
-.ltable{width:100%;max-width:900px;border-collapse:collapse}
-.ltable th{font-family:'Spline Sans Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:rgba(255,255,255,.4);padding:5px 10px;text-align:left;border-bottom:1px solid rgba(255,255,255,.1)}
-.ltable td{padding:7px 10px;font-size:12px;color:rgba(255,255,255,.85);border-bottom:1px solid rgba(255,255,255,.05)}
-.ltable td.r,.ltable th.r{text-align:right;font-family:'Spline Sans Mono',monospace}
-.ltable tr.pos-1 td{background:rgba(252,209,22,.08)}
-.ltable tr.pos-2 td{background:rgba(255,255,255,.03)}
-.ltable tr.pos-3 td{background:rgba(206,17,38,.05)}
-.ltable .money-col{color:#4ade80;font-weight:700}
-.ltable .dim{color:rgba(255,255,255,.3)}
-.manual-head{display:flex;align-items:center;gap:14px;margin-bottom:6px;flex-wrap:wrap;padding-bottom:10px;border-bottom:2px solid rgba(0,17,102,.15)}
-.manual-badge{background:var(--amarillo);color:var(--nodo);font-family:'Spline Sans Mono',monospace;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;padding:3px 10px}
-@media(max-width:600px){.podio-row{grid-template-columns:1fr}}
+/* MIEMBROS */
+.add-member-form{background:var(--card);border:2px solid var(--nodo);padding:18px 20px;margin-bottom:24px}
+.add-member-form h3{font-size:14px;font-weight:900;color:var(--nodo);margin-bottom:14px}
+.form-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+@media(max-width:580px){.form-row{grid-template-columns:1fr 1fr}}
+.field label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--grey);margin-bottom:5px}
+.field input{width:100%;padding:10px 12px;border:2px solid #e2e8f0;font-size:14px;outline:none;transition:border-color .15s}
+.field input:focus{border-color:var(--nodo)}
+.members-table{width:100%;border-collapse:collapse;background:var(--card);border:2px solid var(--nodo)}
+.members-table th{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--grey);padding:9px 14px;text-align:left;border-bottom:2px solid var(--nodo);background:var(--paper)}
+.members-table td{padding:12px 14px;border-bottom:1px solid #f0f0f0;font-size:13px;vertical-align:middle}
+.members-table tr:hover td{background:#f8f9ff}
+.badge-admin{background:var(--nodo);color:var(--amarillo);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;display:inline-block}
+.badge-user{background:#e8eaf0;color:var(--grey);font-size:9px;padding:2px 8px;display:inline-block}
+
+/* BRACKET */
+.bracket-fase{background:var(--card);border:2px solid var(--nodo);margin-bottom:16px}
+.bracket-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--nodo);color:var(--blanco);flex-wrap:wrap;gap:8px}
+.bracket-title{font-size:14px;font-weight:900;color:var(--amarillo)}
+.bracket-sub{font-size:10px;color:rgba(255,255,255,.55);margin-top:2px}
+.bracket-status{font-size:10px;font-weight:700;padding:3px 10px;flex:none}
 </style>
 </head>
 <body>
-<div class="tricolor"></div>
 
-<!-- LOGIN SCREEN -->
-<div id="login-screen">
-  <div class="login-box">
-    <div class="lock">🔐</div>
-    <div class="logo">POLLA <em>NODO</em></div>
-    <div class="sub">Panel de Administrador</div>
-    <input type="password" id="passInput" placeholder="Contraseña de acceso"
-      onkeypress="if(event.key==='Enter') doLogin()">
-    <button id="btnLogin" onclick="doLogin()">Acceder al panel</button>
-    <div id="loginError">Contraseña incorrecta — inténtalo de nuevo</div>
-    <a class="login-back" href="/polla.html">← Volver a La Polla</a>
+<script>
+(function(){
+  const s = JSON.parse(localStorage.getItem('polla-multitenant-sesion')||'null');
+  if (!s || !s.es_admin || !s.polla_id) { location.href = '/'; }
+})();
+</script>
+
+<div class="tricolor"></div>
+<header>
+  <span style="font-size:26px">🛡️</span>
+  <div class="head-main">
+    <div class="head-polla" id="hPollaName">Cargando…</div>
+    <div class="head-admin" id="hAdminName"></div>
+  </div>
+  <span class="admin-badge">Admin</span>
+  <span class="code-chip" id="hCode" title="Click para copiar código" onclick="copiarCodigo()">——</span>
+  <div class="head-right">
+    <a href="/polla.html" class="btn-ghost">← Ver Polla</a>
+    <button class="btn-ghost" onclick="cerrarSesion()">Salir</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tab active" data-tab="tablero" onclick="switchTab('tablero')">📊 Tablero</div>
+  <div class="tab" data-tab="partidos" onclick="switchTab('partidos')">⚽ Partidos</div>
+  <div class="tab" data-tab="miembros" onclick="switchTab('miembros')">👥 Miembros</div>
+  <div class="tab" data-tab="bracket" onclick="switchTab('bracket')">🏆 Bracket</div>
+</nav>
+
+<!-- ── TABLERO ───────────────────────────────────────── -->
+<div class="tab-content active" id="tab-tablero">
+  <div class="section-title">Tablero en vivo</div>
+  <div class="last-upd-row">
+    <div class="live-dot"></div>
+    <span class="section-note" style="margin:0" id="lastUpd">Cargando…</span>
+  </div>
+  <div class="podio-row" id="podioGrid"><div class="loading">Cargando…</div></div>
+  <div style="overflow-x:auto">
+    <table class="ltable" id="liveTable"></table>
   </div>
 </div>
 
-<!-- PANEL ADMIN (oculto hasta login) -->
-<div id="admin-panel" style="display:none">
-  <header>
-    <div class="nodo-icon">
-      <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="30" height="30" fill="#001166" rx="2"/>
-        <path d="M6 22V8h3.6l8.4 9.6V8H22v14h-3.6L10 12.4V22H6z" fill="white"/>
-      </svg>
-    </div>
-    <span class="head-title">ADMIN <em>POLLA 2026</em></span>
-    <span class="admin-badge">🔒 Admin</span>
-    <div class="head-actions">
-      <a href="/polla.html" style="text-decoration:none"><button class="btn blue">← Ver La Polla</button></a>
-      <button class="btn-logout" onclick="doLogout()">Cerrar sesión admin</button>
-    </div>
-  </header>
-
-  <!-- TABLERO EN VIVO -->
-  <div class="live-board" id="liveBoard">
-    <div class="live-board-head">
-      <div class="live-dot"></div>
-      <h2>TABLERO EN VIVO — ¿QUIÉN VA GANANDO?</h2>
-      <span class="last-upd" id="lastUpd">Cargando…</span>
-    </div>
-    <div class="podio-row" id="podioGrid"></div>
-    <table class="ltable" id="liveTable"></table>
-  </div>
-
+<!-- ── PARTIDOS ─────────────────────────────────────── -->
+<div class="tab-content" id="tab-partidos">
+  <div class="section-title">Resultados de partidos</div>
+  <div class="section-note">Se guarda automático al escribir · Impacta todas las pollas en tiempo real</div>
   <div class="toolbar">
     <select id="resStage"><option value="">TODAS LAS FASES</option></select>
-    <button class="btn primary" id="btnSyncESPN" onclick="syncESPN()">🔄 Sincronizar ESPN</button>
-    <button class="btn" id="btnResync" onclick="resyncAll()" style="background:#f0f9ff;border-color:#0284c7;color:#0284c7">📋 Rellenar goleadores vacíos</button>
-    <span class="sync-status" id="syncStatus">ESPN polling automático cada 60s</span>
+    <button class="btn btn-primary btn-sm" id="btnSyncESPN" onclick="syncESPN()">🔄 Sync ESPN</button>
+    <button class="btn btn-sm btn-outline" id="btnResync" onclick="resyncAll()">📋 Rellenar vacíos</button>
+    <span class="sync-status" id="syncStatus"></span>
+  </div>
+  <div class="bets-grid" id="resGrid"><div class="loading">Cargando partidos…</div></div>
+</div>
+
+<!-- ── MIEMBROS ─────────────────────────────────────── -->
+<div class="tab-content" id="tab-miembros">
+  <div class="section-title">Gestión de miembros</div>
+  <div class="section-note" id="memberCount">Cargando…</div>
+  <div class="msg-error" id="errMiembro"></div>
+  <div class="msg-ok" id="okMiembro"></div>
+
+  <div class="add-member-form">
+    <h3>➕ Agregar participante manualmente</h3>
+    <div class="form-row">
+      <div class="field">
+        <label>Nombre</label>
+        <input type="text" id="mNombre" placeholder="Nombre" maxlength="60">
+      </div>
+      <div class="field">
+        <label>Apellido</label>
+        <input type="text" id="mApellido" placeholder="Apellido" maxlength="60">
+      </div>
+      <div style="align-self:end">
+        <button class="btn btn-primary" id="btnAddMember" onclick="addMember()" style="height:42px;white-space:nowrap">+ Agregar</button>
+      </div>
+    </div>
   </div>
 
-  <main>
-    <div class="manual-head">
-      <h2>Ingreso manual de marcadores</h2>
-      <span class="manual-badge">✏️ Fallback si ESPN falla</span>
-      <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--grey)">Se guarda automático · impacta tabla y polla en tiempo real</span>
-    </div>
-    <p class="note">ESCRIBE EL MARCADOR Y GOLEADORES — SE GUARDA AUTOMÁTICO AL ESCRIBIR · BORRÓN EN ROJO POR SI TE EQUIVOCAS</p>
-    <div class="bets-grid" id="resGrid"><div class="loading">Cargando partidos…</div></div>
+  <div style="overflow-x:auto">
+    <table class="members-table" id="membersTable">
+      <thead>
+        <tr>
+          <th>#</th><th>Nombre</th><th>Apellido</th><th>Rol</th><th>Ingresó</th><th>Acción</th>
+        </tr>
+      </thead>
+      <tbody id="membersBody">
+        <tr><td colspan="6" class="loading">Cargando…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
-    <!-- ── GESTIÓN DE LLAVES (BRACKET) ── -->
-    <div style="margin-top:40px;padding-top:24px;border-top:3px solid var(--nodo)">
-      <div class="manual-head">
-        <h2>Llaves de eliminación</h2>
-        <span class="manual-badge" style="background:var(--amarillo);color:var(--nodo)">🏆 Bracket</span>
-        <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--grey)">Selecciona los equipos clasificados y confirma — los usuarios reciben puntos automáticamente</span>
-      </div>
-      <p class="note">SELECCIONA LOS EQUIPOS QUE CLASIFICARON REALMENTE · GUARDA Y CONFIRMA POR FASE · SOLO CONFIRMADAS DAN PUNTOS</p>
-      <div id="bracketAdmin"><div class="loading">Cargando…</div></div>
-    </div>
-  </main>
-
-  <footer>
-    <span>ADMIN PANEL · LA POLLA NODO · MUNDIAL 2026</span>
-    <span>SOLO USO INTERNO ☕</span>
-  </footer>
+<!-- ── BRACKET ─────────────────────────────────────── -->
+<div class="tab-content" id="tab-bracket">
+  <div class="section-title">Llaves de eliminación</div>
+  <div class="section-note">Confirma los clasificados — los usuarios reciben puntos automáticamente</div>
+  <div id="bracketAdmin"><div class="loading">Cargando…</div></div>
 </div>
 
 <script>
-const ADMIN_PASS = '854596+44';
+const SESSION_KEY = 'polla-multitenant-sesion';
+const sesion = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
 const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 const $ = id => document.getElementById(id);
 
-const DAYS = ['dom','lun','mar','mié','jue','vie','sáb'];
-const flag  = (c,l) => c ? `<img class="flag" src="https://flagcdn.com/w80/${c}.png" alt="${l}">` : `<div class="flag-tbd">${(l||'').slice(0,3)||'?'}</div>`;
-const todayCOL = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+// Header
+$('hPollaName').textContent = sesion?.polla_nombre || 'Mi Polla';
+$('hAdminName').textContent = `Admin: ${sesion?.nombre||''} ${sesion?.apellido||''}`.trim();
+$('hCode').textContent = sesion?.codigo_invite || '——';
 
-const fmtWhen = m => { const d=new Date(m.fecha+'T12:00:00-05:00'); return `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1} · ${m.hora}`; };
-
-// ── GOLEADORES HELPERS ─────────────────────────────
-function parseGols(str) {
-  if (!str || !str.trim()) return [];
-  return str.split(' · ').map(s => {
-    const pen = s.includes('(pen)');
-    const og  = s.includes('(pp)');
-    s = s.replace(' (pen)', '').replace(' (pp)', '').trim();
-    const m = s.match(/\s(\d+)'$/);
-    const min = m ? m[1] : '';
-    const name = m ? s.slice(0, -m[0].length).trim() : s;
-    return { name, min, pen, og };
-  }).filter(g => g.name);
+function copiarCodigo() {
+  const link = `${location.origin}/?code=${sesion?.codigo_invite}`;
+  navigator.clipboard?.writeText(link).then(() => {
+    $('hCode').textContent = '¡Copiado!';
+    setTimeout(() => { $('hCode').textContent = sesion?.codigo_invite || '——'; }, 1500);
+  });
 }
 
-function golRowHtml(mid, g = {}) {
-  const name = (g.name || '').replace(/"/g, '&quot;');
+function cerrarSesion() { localStorage.removeItem(SESSION_KEY); location.href = '/'; }
+
+// ── TABS ─────────────────────────────────────────────
+let loaded = { tablero: false, partidos: false, miembros: false, bracket: false };
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + name));
+  if (!loaded[name]) {
+    loaded[name] = true;
+    if (name === 'tablero') loadLeaderboard();
+    if (name === 'partidos') loadMatches();
+    if (name === 'miembros') loadMembers();
+    if (name === 'bracket') loadBracketAdmin();
+  }
+}
+
+// ── HELPERS ──────────────────────────────────────────
+const DAYS = ['dom','lun','mar','mié','jue','vie','sáb'];
+const flag = (c,l) => c ? `<img class="flag" src="https://flagcdn.com/w80/${c}.png" alt="${l}" onerror="this.style.display='none'">` : `<div class="flag-tbd">${(l||'').slice(0,3)}</div>`;
+const fmtWhen = m => { const d=new Date(m.fecha+'T12:00:00-05:00'); return `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`; };
+const fmtDate = s => s ? new Date(s).toLocaleDateString('es-CO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '—';
+
+function showMsg(id, msg, isErr) {
+  const el = $(id); el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+// ── TABLERO ───────────────────────────────────────────
+async function loadLeaderboard() {
+  const { data, error } = await sb.from('v_tabla_polla').select('*').eq('polla_id', sesion.polla_id);
+  const now = new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  $('lastUpd').textContent = `Última actualización: ${now}`;
+
+  if (error || !data?.length) {
+    $('podioGrid').innerHTML = '<div style="grid-column:1/-1;color:var(--grey);font-size:12px;text-align:center;padding:20px">Sin participantes con apuestas aún.</div>';
+    $('liveTable').innerHTML = '';
+    return;
+  }
+
+  const medals = ['🥇','🥈','🥉'], pc = ['pos-1','pos-2','pos-3'];
+  $('podioGrid').innerHTML = data.slice(0,3).map((r,i) => `
+    <div class="podio-card ${pc[i]}">
+      <div class="podio-medal">${medals[i]}</div>
+      <div class="podio-name">${r.nombre_completo}</div>
+      <div class="podio-pts">${r.puntos}<span style="font-size:13px;font-weight:400"> pts</span></div>
+      <div class="podio-sub">${r.exactos} exactos · ${r.aciertos} aciertos<br>${r.evaluados} partidos evaluados</div>
+    </div>`).join('');
+
+  $('liveTable').innerHTML =
+    `<tr><th style="width:40px">#</th><th>Participante</th><th class="r">Pts</th><th class="r">Exactos</th><th class="r">Aciertos</th><th class="r">Evaluados</th></tr>` +
+    data.map((r,i) => `<tr class="${i<3?pc[i]:''}">
+      <td class="medal">${medals[i]||(i+1)}</td>
+      <td><b>${r.nombre_completo}</b></td>
+      <td class="r pts">${r.puntos}</td>
+      <td class="r">${r.exactos}</td>
+      <td class="r">${r.aciertos}</td>
+      <td class="r" style="color:var(--grey)">${r.evaluados}</td>
+    </tr>`).join('');
+}
+
+sb.channel('admin-tablero')
+  .on('postgres_changes',{event:'*',schema:'public',table:'resultados'},()=>{ if(loaded.tablero) loadLeaderboard(); })
+  .subscribe();
+
+// ── PARTIDOS ──────────────────────────────────────────
+let MATCHES = [], RESULTADOS = {};
+
+async function loadMatches() {
+  const [{ data: partidos },{ data: resultados }] = await Promise.all([
+    sb.from('partidos').select('*').order('fecha').order('hora'),
+    sb.from('resultados').select('*')
+  ]);
+  MATCHES = partidos || [];
+  RESULTADOS = {};
+  (resultados||[]).forEach(r => {
+    RESULTADOS[r.partido_id] = { gl:r.goles_local, gv:r.goles_vis, gol:r.goleadores||'', tar:r.tarjetas||'' };
+  });
+  const etapas = [...new Set(MATCHES.map(m=>m.etapa))];
+  $('resStage').innerHTML = '<option value="">TODAS LAS FASES</option>' + etapas.map(e=>`<option value="${e}">${e.toUpperCase()}</option>`).join('');
+  $('resStage').onchange = renderRes;
+  renderRes();
+
+  sb.channel('admin-resultados')
+    .on('postgres_changes',{event:'*',schema:'public',table:'resultados'}, payload => {
+      if (payload.new) RESULTADOS[payload.new.partido_id] = { gl:payload.new.goles_local, gv:payload.new.goles_vis, gol:payload.new.goleadores||'', tar:payload.new.tarjetas||'' };
+      if (payload.eventType==='DELETE') delete RESULTADOS[payload.old.partido_id];
+      renderRes();
+    }).subscribe();
+}
+
+function renderRes() {
+  const st = $('resStage').value;
+  const list = MATCHES.filter(m => !st || m.etapa === st);
+  $('resGrid').innerHTML = list.map(m => {
+    const r = RESULTADOS[m.id] || { gl:'',gv:'',gol:'',tar:'' };
+    const saved = r.gl != null && r.gl !== '';
+    return `<div class="bet-card ${saved?'saved':''}" id="res-${m.id}">
+      <div class="bet-top">
+        <span class="stage">${m.etapa}</span>
+        <span>${fmtWhen(m)}</span>
+        ${saved?`<button class="btn btn-danger btn-xs" onclick="borrar(${m.id})">🗑 Borrar</button>`:''}
+      </div>
+      <div class="bet-teams">
+        <div class="bt">${flag(m.codigo_local,m.local)}<span>${m.local}</span></div>
+        <input class="score-in" type="number" min="0" max="20" value="${r.gl!=null&&r.gl!==''?r.gl:''}" data-m="${m.id}" data-s="gl">
+        <span class="score-sep">–</span>
+        <input class="score-in" type="number" min="0" max="20" value="${r.gv!=null&&r.gv!==''?r.gv:''}" data-m="${m.id}" data-s="gv">
+        <div class="bt right"><span>${m.visitante}</span>${flag(m.codigo_vis,m.visitante)}</div>
+      </div>
+      <div>
+        <div class="section-sep">⚽ Goles</div>
+        <div class="gol-rows" id="gol-rows-${m.id}">${parseGols(r.gol).map(g=>golRowHtml(m.id,g)).join('')}</div>
+        <button class="btn-add-gol" onclick="addGolRow(${m.id})">+ Agregar gol</button>
+        <div class="section-sep"><span class="tc tc-y"></span><span class="tc tc-r"></span> Tarjetas</div>
+        <div class="card-rows" id="card-rows-${m.id}">${parseTarjetas(r.tar).map(t=>cardRowHtml(m.id,t)).join('')}</div>
+        <button class="btn-add-gol" onclick="addCardRow(${m.id})">+ Agregar tarjeta</button>
+      </div>
+    </div>`;
+  }).join('') || '<div class="loading">Sin partidos en esta fase.</div>';
+}
+
+// Goals/cards parsing + rendering
+function parseGols(str) {
+  if (!str?.trim()) return [];
+  return str.split(' · ').map(s => {
+    const pen=s.includes('(pen)'),og=s.includes('(pp)');
+    s=s.replace(' (pen)','').replace(' (pp)','').trim();
+    const m=s.match(/\s(\d+)'$/);
+    return { name:m?s.slice(0,-m[0].length).trim():s, min:m?m[1]:'', pen, og };
+  }).filter(g=>g.name);
+}
+function parseTarjetas(str) {
+  if (!str?.trim()) return [];
+  return str.split(' · ').map(s => {
+    s=s.trim(); let type='yellow';
+    if(s.startsWith('🟨🟥')){type='yr';s=s.slice(4).trim();}
+    else if(s.startsWith('🟥')){type='red';s=s.slice(2).trim();}
+    else if(s.startsWith('🟨')){s=s.slice(2).trim();}
+    const m=s.match(/\s(\d+)'$/);
+    return { name:m?s.slice(0,-m[0].length).trim():s, min:m?m[1]:'', type };
+  }).filter(t=>t.name);
+}
+function golRowHtml(mid,g={}) {
   return `<div class="gol-row">
-    <input class="gol-name" type="text" placeholder="Jugador" value="${name}" data-m="${mid}" data-s="gol-part">
+    <input class="gol-name" type="text" placeholder="Jugador" value="${(g.name||'').replace(/"/g,'&quot;')}" data-m="${mid}" data-s="gol-part">
     <input class="gol-min" type="number" min="1" max="130" placeholder="Min" value="${g.min||''}" data-m="${mid}" data-s="gol-part">
     <label class="gol-chk"><input type="checkbox" class="gol-pen" ${g.pen?'checked':''} data-m="${mid}" data-s="gol-part"> Pen</label>
     <label class="gol-chk"><input type="checkbox" class="gol-og" ${g.og?'checked':''} data-m="${mid}" data-s="gol-part"> PP</label>
     <button class="gol-del" onclick="removeGolRow(this,${mid})">×</button>
   </div>`;
 }
-
-function serializeGols(mid) {
-  return Array.from(document.querySelectorAll(`#gol-rows-${mid} .gol-row`)).map(row => {
-    const name = row.querySelector('.gol-name').value.trim();
-    if (!name) return null;
-    const min = row.querySelector('.gol-min').value;
-    const pen = row.querySelector('.gol-pen').checked;
-    const og  = row.querySelector('.gol-og').checked;
-    return `${name}${min ? " "+min+"'" : ''}${pen ? ' (pen)' : ''}${og ? ' (pp)' : ''}`;
-  }).filter(Boolean).join(' · ');
-}
-
-window.addGolRow = mid => {
-  const rows = document.getElementById('gol-rows-' + mid);
-  if (rows) { rows.insertAdjacentHTML('beforeend', golRowHtml(mid)); }
-};
-
-window.removeGolRow = (btn, mid) => {
-  btn.closest('.gol-row').remove();
-  triggerGolSave(mid);
-};
-
-function triggerGolSave(mid) {
-  RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null, gol: '', tar: '' };
-  RESULTADOS[mid].gol = serializeGols(mid);
-  const card = document.getElementById('res-' + mid);
-  if (card) card.classList.add('saving');
-  clearTimeout(timers[mid]);
-  timers[mid] = setTimeout(() => saveResultado(mid), 800);
-}
-
-// ── TARJETAS HELPERS ───────────────────────────────
-function parseTarjetas(str) {
-  if (!str || !str.trim()) return [];
-  return str.split(' · ').map(s => {
-    s = s.trim();
-    let type = 'yellow';
-    if (s.startsWith('🟨🟥'))      { type = 'yr';     s = s.slice(4).trim(); }
-    else if (s.startsWith('🟥'))   { type = 'red';    s = s.slice(2).trim(); }
-    else if (s.startsWith('🟨'))   { type = 'yellow'; s = s.slice(2).trim(); }
-    const m = s.match(/\s(\d+)'$/);
-    const min = m ? m[1] : '';
-    const name = m ? s.slice(0, -m[0].length).trim() : s;
-    return { name, min, type };
-  }).filter(t => t.name);
-}
-
-function cardRowHtml(mid, t = {}) {
-  const name = (t.name || '').replace(/"/g, '&quot;');
-  const opt = v => `<option value="${v}" ${(t.type||'yellow')===v?'selected':''}>`
+function cardRowHtml(mid,t={}) {
+  const opt=v=>`<option value="${v}" ${(t.type||'yellow')===v?'selected':''}>`;
   return `<div class="card-row">
-    <input class="card-name" type="text" placeholder="Jugador" value="${name}" data-m="${mid}" data-s="card-part">
+    <input class="card-name" type="text" placeholder="Jugador" value="${(t.name||'').replace(/"/g,'&quot;')}" data-m="${mid}" data-s="card-part">
     <input class="card-min" type="number" min="1" max="130" placeholder="Min" value="${t.min||''}" data-m="${mid}" data-s="card-part">
-    <select class="card-type" data-m="${mid}" data-s="card-part">
-      ${opt('yellow')}🟨 Amarilla</option>
-      ${opt('red')}🟥 Roja</option>
-      ${opt('yr')}🟨🟥 2ª Amarilla</option>
-    </select>
+    <select class="card-type" data-m="${mid}" data-s="card-part">${opt('yellow')}🟨 Amarilla</option>${opt('red')}🟥 Roja</option>${opt('yr')}🟨🟥 2ª Amarilla</option></select>
     <button class="gol-del" onclick="removeCardRow(this,${mid})">×</button>
   </div>`;
 }
-
-function serializeTarjetas(mid) {
-  return Array.from(document.querySelectorAll(`#card-rows-${mid} .card-row`)).map(row => {
-    const name = row.querySelector('.card-name').value.trim();
-    if (!name) return null;
-    const min  = row.querySelector('.card-min').value;
-    const type = row.querySelector('.card-type').value;
-    const emoji = type === 'red' ? '🟥' : type === 'yr' ? '🟨🟥' : '🟨';
-    return `${emoji} ${name}${min ? ' '+min+"'" : ''}`;
+function serializeGols(mid) {
+  return Array.from(document.querySelectorAll(`#gol-rows-${mid} .gol-row`)).map(row => {
+    const name=row.querySelector('.gol-name').value.trim(); if(!name) return null;
+    const min=row.querySelector('.gol-min').value;
+    const pen=row.querySelector('.gol-pen').checked;
+    const og=row.querySelector('.gol-og').checked;
+    return `${name}${min?' '+min+"'":''}${pen?' (pen)':''}${og?' (pp)':''}`;
   }).filter(Boolean).join(' · ');
 }
-
-window.addCardRow = mid => {
-  const rows = document.getElementById('card-rows-' + mid);
-  if (rows) rows.insertAdjacentHTML('beforeend', cardRowHtml(mid));
-};
-
-window.removeCardRow = (btn, mid) => {
-  btn.closest('.card-row').remove();
-  triggerCardSave(mid);
-};
-
-function triggerCardSave(mid) {
-  RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null, gol: '', tar: '' };
-  RESULTADOS[mid].tar = serializeTarjetas(mid);
-  const card = document.getElementById('res-' + mid);
-  if (card) card.classList.add('saving');
-  clearTimeout(timers[mid]);
-  timers[mid] = setTimeout(() => saveResultado(mid), 800);
+function serializeTarjetas(mid) {
+  return Array.from(document.querySelectorAll(`#card-rows-${mid} .card-row`)).map(row => {
+    const name=row.querySelector('.card-name').value.trim(); if(!name) return null;
+    const min=row.querySelector('.card-min').value;
+    const type=row.querySelector('.card-type').value;
+    const emoji=type==='red'?'🟥':type==='yr'?'🟨🟥':'🟨';
+    return `${emoji} ${name}${min?' '+min+"'":''}`;
+  }).filter(Boolean).join(' · ');
 }
+window.addGolRow  = mid => document.getElementById('gol-rows-'+mid)?.insertAdjacentHTML('beforeend',golRowHtml(mid));
+window.addCardRow = mid => document.getElementById('card-rows-'+mid)?.insertAdjacentHTML('beforeend',cardRowHtml(mid));
+window.removeGolRow  = (btn,mid) => { btn.closest('.gol-row').remove();  triggerGolSave(mid);  };
+window.removeCardRow = (btn,mid) => { btn.closest('.card-row').remove(); triggerCardSave(mid); };
 
-// ── LOGIN ──────────────────────────────────────────
-function doLogin() {
-  const pass = $('passInput').value;
-  if (pass === ADMIN_PASS) {
-    sessionStorage.setItem('polla-admin', '1');
-    showPanel();
-  } else {
-    $('loginError').style.display = 'block';
-    $('passInput').value = '';
-    $('passInput').focus();
-    setTimeout(() => { $('loginError').style.display = 'none'; }, 3000);
-  }
-}
-
-function doLogout() {
-  sessionStorage.removeItem('polla-admin');
-  window.location.reload();
-}
-
-function showPanel() {
-  $('login-screen').style.display = 'none';
-  $('admin-panel').style.display = 'block';
-  init();
-  document.dispatchEvent(new Event('admin-ready'));
-}
-
-// Auto-login si ya está autenticado en esta sesión
-if (sessionStorage.getItem('polla-admin') === '1') {
-  showPanel();
-}
-
-// ── DATA ───────────────────────────────────────────
-let MATCHES = [], RESULTADOS = {};
-
-async function init() {
-  const [{ data: partidos }, { data: resultados }] = await Promise.all([
-    sb.from('partidos').select('*').order('fecha').order('hora'),
-    sb.from('resultados').select('*')
-  ]);
-
-  MATCHES = partidos || [];
-  RESULTADOS = {};
-  (resultados || []).forEach(r => {
-    RESULTADOS[r.partido_id] = { gl: r.goles_local, gv: r.goles_vis, gol: r.goleadores || '', tar: r.tarjetas || '' };
-  });
-
-  const etapas = [...new Set(MATCHES.map(m => m.etapa))];
-  $('resStage').innerHTML = '<option value="">TODAS LAS FASES</option>' +
-    etapas.map(e => `<option value="${e}">${e.toUpperCase()}</option>`).join('');
-  $('resStage').onchange = renderRes;
-
-  renderRes();
-  loadLeaderboard();
-
-  // Realtime: actualizar cuando ESPN/alguien guarda un resultado
-  sb.channel('admin-resultados')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'resultados' }, payload => {
-      if (payload.new) {
-        RESULTADOS[payload.new.partido_id] = {
-          gl: payload.new.goles_local, gv: payload.new.goles_vis,
-          gol: payload.new.goleadores || ''
-        };
-        renderRes();
-      }
-      if (payload.eventType === 'DELETE') {
-        delete RESULTADOS[payload.old.partido_id];
-        renderRes();
-      }
-    })
-    .subscribe();
-}
-
-// ── RENDER ─────────────────────────────────────────
-function renderRes() {
-  const st = $('resStage').value;
-  const list = MATCHES.filter(m => !st || m.etapa === st);
-
-  $('resGrid').innerHTML = list.map(m => {
-    const r = RESULTADOS[m.id] || { gl: '', gv: '', gol: '' };
-    const saved = r.gl != null && r.gl !== '';
-    return `<div class="bet-card ${saved ? 'saved' : ''}" id="res-${m.id}">
-      <div class="bet-top">
-        <span class="stage">${m.etapa}</span>
-        <span>P${m.id} · ${fmtWhen(m)}</span>
-        ${saved ? `<button class="btn danger" style="font-size:9px;padding:2px 8px" onclick="borrar(${m.id})">🗑 Borrar</button>` : ''}
-      </div>
-      <div class="bet-teams">
-        <div class="bt">${flag(m.codigo_local, m.local)}<span>${m.local}</span></div>
-        <input class="score-in" type="number" min="0" max="20"
-          value="${r.gl != null && r.gl !== '' ? r.gl : ''}" data-m="${m.id}" data-s="gl">
-        <span class="score-sep">–</span>
-        <input class="score-in" type="number" min="0" max="20"
-          value="${r.gv != null && r.gv !== '' ? r.gv : ''}" data-m="${m.id}" data-s="gv">
-        <div class="bt right"><span>${m.visitante}</span>${flag(m.codigo_vis, m.visitante)}</div>
-      </div>
-      <div class="gol-builder">
-        <div class="section-sep">⚽ Goles</div>
-
-        <div class="gol-rows" id="gol-rows-${m.id}">
-          ${parseGols(r.gol||'').map(g=>golRowHtml(m.id,g)).join('')}
-        </div>
-        <button class="btn-add-gol" onclick="addGolRow(${m.id})">+ Agregar gol</button>
-        <div class="section-sep"><span class="tc tc-y"></span><span class="tc tc-r"></span> Tarjetas</div>
-        <div class="card-builder">
-          <div class="card-rows" id="card-rows-${m.id}">
-            ${parseTarjetas(r.tar||'').map(t=>cardRowHtml(m.id,t)).join('')}
-          </div>
-          <button class="btn-add-gol" onclick="addCardRow(${m.id})">+ Agregar tarjeta</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('') || '<div class="loading">Sin partidos en esta fase.</div>';
-}
-
-// ── SAVE (auto) ────────────────────────────────────
 const timers = {};
+function triggerGolSave(mid) {
+  RESULTADOS[mid]=RESULTADOS[mid]||{gl:null,gv:null,gol:'',tar:''};
+  RESULTADOS[mid].gol=serializeGols(mid);
+  document.getElementById('res-'+mid)?.classList.add('saving');
+  clearTimeout(timers[mid]); timers[mid]=setTimeout(()=>saveResultado(mid),800);
+}
+function triggerCardSave(mid) {
+  RESULTADOS[mid]=RESULTADOS[mid]||{gl:null,gv:null,gol:'',tar:''};
+  RESULTADOS[mid].tar=serializeTarjetas(mid);
+  document.getElementById('res-'+mid)?.classList.add('saving');
+  clearTimeout(timers[mid]); timers[mid]=setTimeout(()=>saveResultado(mid),800);
+}
 function onResInput(e) {
-  const inp = e.target; if (!inp.dataset.m) return;
-  const mid = +inp.dataset.m;
-  if (inp.dataset.s === 'gol-part')  { triggerGolSave(mid);  return; }
-  if (inp.dataset.s === 'card-part') { triggerCardSave(mid); return; }
-  RESULTADOS[mid] = RESULTADOS[mid] || { gl: null, gv: null, gol: '', tar: '' };
-  RESULTADOS[mid][inp.dataset.s] = inp.value !== '' ? +inp.value : null;
-  const card = document.getElementById('res-' + mid);
-  if (card) card.classList.add('saving');
-  clearTimeout(timers[mid]);
-  timers[mid] = setTimeout(() => saveResultado(mid), 800);
+  const inp=e.target; if(!inp.dataset.m) return;
+  const mid=+inp.dataset.m;
+  if(inp.dataset.s==='gol-part')  { triggerGolSave(mid);  return; }
+  if(inp.dataset.s==='card-part') { triggerCardSave(mid); return; }
+  RESULTADOS[mid]=RESULTADOS[mid]||{gl:null,gv:null,gol:'',tar:''};
+  RESULTADOS[mid][inp.dataset.s]=inp.value!==''?+inp.value:null;
+  document.getElementById('res-'+mid)?.classList.add('saving');
+  clearTimeout(timers[mid]); timers[mid]=setTimeout(()=>saveResultado(mid),800);
 }
 $('resGrid').addEventListener('input',  onResInput);
 $('resGrid').addEventListener('change', onResInput);
 
 async function saveResultado(mid) {
-  const r = RESULTADOS[mid];
-  if (r.gl == null || r.gv == null) return;
+  const r=RESULTADOS[mid]; if(r.gl==null||r.gv==null) return;
   await sb.from('resultados').upsert({
-    partido_id: mid,
-    goles_local: r.gl,
-    goles_vis: r.gv,
-    goleadores: r.gol || '',
-    tarjetas:   r.tar || '',
-    updated_at: new Date().toISOString()
-  }, { onConflict: 'partido_id' });
-  const card = document.getElementById('res-' + mid);
-  if (card) { card.classList.remove('saving'); card.classList.add('saved'); }
+    partido_id:mid, goles_local:r.gl, goles_vis:r.gv,
+    goleadores:r.gol||'', tarjetas:r.tar||'', updated_at:new Date().toISOString()
+  },{onConflict:'partido_id'});
+  const c=document.getElementById('res-'+mid);
+  if(c){c.classList.remove('saving');c.classList.add('saved');}
 }
-
-window.borrar = async (mid) => {
-  if (!confirm(`¿Borrar resultado del partido ${mid}?`)) return;
-  await sb.from('resultados').delete().eq('partido_id', mid);
-  delete RESULTADOS[mid];
-  renderRes();
+window.borrar = async mid => {
+  if(!confirm(`¿Borrar resultado del partido ${mid}? Los pronósticos de los usuarios quedarán sin evaluar.`)) return;
+  await sb.from('resultados').delete().eq('partido_id',mid);
+  delete RESULTADOS[mid]; renderRes();
 };
-
-// ── BARRIDO DE GOLEADORES VACÍOS ───────────────────
-window.resyncAll = async () => {
-  const btn = $('btnResync');
-  const status = $('syncStatus');
-  btn.textContent = '⏳ Barriendo…'; btn.disabled = true;
-  status.textContent = 'Consultando SofaScore para goleadores vacíos…';
-  try {
-    const res = await fetch('/api/resync-all');
-    const { ok, fixed = 0, skipped = 0, total = 0, msg, error } = await res.json();
-    if (!ok) throw new Error(error || 'Error desconocido');
-    const now = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-    status.textContent = msg || `✓ Rellenados ${fixed}/${total} partidos (${skipped} no encontrados) · ${now}`;
-    btn.textContent = `✓ ${fixed} rellenos`;
-    if (fixed > 0) { renderRes(); loadLeaderboard(); }
-  } catch (e) {
-    status.textContent = `✗ ${e.message}`;
-    btn.textContent = '✗ Error';
-  }
-  setTimeout(() => { btn.textContent = '📋 Rellenar goleadores vacíos'; btn.disabled = false; }, 5000);
-};
-
-// ── ESPN SYNC ──────────────────────────────────────
 window.syncESPN = async () => {
-  const btn = $('btnSyncESPN');
-  const status = $('syncStatus');
-  btn.textContent = '⏳ Sincronizando…'; btn.disabled = true;
+  const btn=$('btnSyncESPN'),st=$('syncStatus');
+  btn.disabled=true; btn.textContent='⏳ Sync…';
   try {
-    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const res = await fetch(`/api/sync-espn?date=${today}`);
-    const { updated = 0, error = null } = await res.json();
-    if (error) throw new Error(error);
-    const now = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
-    status.textContent = `✓ ${updated} actualizado${updated !== 1 ? 's' : ''} · ${now}`;
-    btn.textContent = `✓ ${updated} actualizados`;
-    setTimeout(() => { btn.textContent = '🔄 Sincronizar ESPN'; btn.disabled = false; }, 3000);
-    if (updated > 0) { renderRes(); loadLeaderboard(); }
-  } catch (e) {
-    status.textContent = `✗ Error: ${e.message}`;
-    btn.textContent = '✗ Error'; btn.disabled = false;
-    setTimeout(() => { btn.textContent = '🔄 Sincronizar ESPN'; }, 3000);
-  }
+    const {updated=0,error}=await (await fetch('/api/sync-espn')).json();
+    if(error) throw new Error(error);
+    const now=new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+    st.textContent=`✓ ${updated} actualizado${updated!==1?'s':''} · ${now}`;
+    if(updated>0){await loadMatches();if(loaded.tablero)loadLeaderboard();}
+  } catch(e){st.textContent='✗ '+e.message;}
+  setTimeout(()=>{btn.textContent='🔄 Sync ESPN';btn.disabled=false;},3000);
+};
+window.resyncAll = async () => {
+  const btn=$('btnResync'),st=$('syncStatus');
+  btn.disabled=true; btn.textContent='⏳ Barriendo…';
+  try {
+    const {ok,fixed=0,total=0,error}=await (await fetch('/api/resync-all')).json();
+    if(!ok) throw new Error(error||'Error');
+    st.textContent=`✓ ${fixed}/${total} rellenos`;
+    if(fixed>0) await loadMatches();
+  } catch(e){st.textContent='✗ '+e.message;}
+  setTimeout(()=>{btn.textContent='📋 Rellenar vacíos';btn.disabled=false;},4000);
 };
 
-// ── TABLERO EN VIVO ────────────────────────────────
-const fmtPesos = p => '$' + new Intl.NumberFormat('es-CO').format(p || 0);
+// ── MIEMBROS ──────────────────────────────────────────
+async function loadMembers() {
+  const { data } = await sb.from('polla_miembros')
+    .select('id,nombre,apellido,es_admin,joined_at')
+    .eq('polla_id', sesion.polla_id)
+    .order('joined_at',{ascending:true});
 
-async function loadLeaderboard() {
-  const { data, error } = await sb.from('v_tabla').select('*');
-  const now = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  $('lastUpd').textContent = `Última actualización: ${now}`;
+  const members = data || [];
+  $('memberCount').textContent = `${members.length} de 30 participantes · Código: ${sesion.codigo_invite||'—'}`;
 
-  if (error || !data || !data.length) {
-    $('podioGrid').innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:12px;font-family:monospace;grid-column:1/-1">Sin datos — ejecuta el schema.sql en Supabase.</div>';
-    return;
-  }
-
-  const medals = ['🥇', '🥈', '🥉'];
-  const posClass = ['pos-1', 'pos-2', 'pos-3'];
-
-  // Podio top 3
-  $('podioGrid').innerHTML = data.slice(0, 3).map((r, i) => `
-    <div class="podio-card ${posClass[i]}">
-      <div class="podio-medal">${medals[i]}</div>
-      <div class="podio-name" title="${r.nombre_completo}">${r.nombre_completo}</div>
-      <div class="podio-pts">${r.puntos} <span style="font-size:14px">PTS</span></div>
-      <div class="podio-pesos">💰 ${fmtPesos(r.pesos)}</div>
-      <div class="podio-sub">${r.exactos} exactos · ${r.aciertos} aciertos<br>${r.evaluados} partidos evaluados</div>
-    </div>
-  `).join('');
-
-  // Tabla completa
-  $('liveTable').innerHTML =
-    `<tr><th>#</th><th>Participante</th><th class="r">Pts</th><th class="r">Exactos</th><th class="r">Aciertos</th><th class="r">Eval.</th><th class="r">💰 Pesos acum.</th></tr>` +
-    data.map((r, i) => {
-      const enPremio = i < 3;
-      return `<tr class="${i < 3 ? posClass[i] : ''}">
-        <td><b>${medals[i] || (i + 1)}</b></td>
-        <td><b>${r.nombre_completo}</b></td>
-        <td class="r"><b>${r.puntos}</b></td>
-        <td class="r">${r.exactos}</td>
-        <td class="r">${r.aciertos}</td>
-        <td class="r dim">${r.evaluados}</td>
-        <td class="r ${enPremio ? 'money-col' : 'dim'}">${fmtPesos(r.pesos)}</td>
-      </tr>`;
-    }).join('');
+  $('membersBody').innerHTML = members.length ? members.map((m,i) => `
+    <tr>
+      <td style="color:var(--grey);font-size:11px">${i+1}</td>
+      <td><b>${m.nombre}</b></td>
+      <td>${m.apellido}</td>
+      <td><span class="${m.es_admin?'badge-admin':'badge-user'}">${m.es_admin?'🛡 Admin':'Participante'}</span></td>
+      <td style="font-size:11px;color:var(--grey)">${fmtDate(m.joined_at)}</td>
+      <td>${m.es_admin
+        ? '<span style="font-size:11px;color:var(--grey)">—</span>'
+        : `<button class="btn btn-danger btn-xs" onclick="removeMember('${m.id}','${m.nombre} ${m.apellido}')">Eliminar</button>`
+      }</td>
+    </tr>`).join('')
+  : `<tr><td colspan="6" class="loading">No hay participantes aún. Comparte el código <b>${sesion.codigo_invite}</b> para que se unan.</td></tr>`;
 }
 
-// Realtime: actualizar tablero cada vez que llega un resultado nuevo
-sb.channel('admin-tablero-live')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'resultados' }, () => {
-    loadLeaderboard();
-  })
-  .subscribe();
+async function addMember() {
+  const nombre = $('mNombre').value.trim();
+  const apellido = $('mApellido').value.trim();
+  $('errMiembro').classList.remove('show');
+  if (!nombre || !apellido) {
+    $('errMiembro').textContent = 'Ingresa nombre y apellido.';
+    $('errMiembro').classList.add('show'); return;
+  }
+  const btn = $('btnAddMember'); btn.disabled=true; btn.textContent='Agregando…';
+  try {
+    const r = await fetch('/api/pollas/unirse',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({codigo_invite:sesion.codigo_invite, nombre, apellido})
+    });
+    const data = await r.json();
+    if (!r.ok) { $('errMiembro').textContent=data.error||'Error al agregar'; $('errMiembro').classList.add('show'); return; }
+    const msg = data.relogin
+      ? `${nombre} ${apellido} ya estaba registrado en la polla.`
+      : `✓ ${nombre} ${apellido} agregado correctamente.`;
+    showMsg('okMiembro', msg);
+    if (!data.relogin) { $('mNombre').value=''; $('mApellido').value=''; }
+    await loadMembers();
+  } catch(e) {
+    $('errMiembro').textContent='Error de conexión.'; $('errMiembro').classList.add('show');
+  } finally {
+    btn.disabled=false; btn.textContent='+ Agregar';
+  }
+}
 
-// ══════════════════════════════════════════════════
-// ADMIN BRACKET — GESTIÓN DE LLAVES
-// ══════════════════════════════════════════════════
+window.removeMember = async (miembroId, nombre) => {
+  if (!confirm(`¿Eliminar a "${nombre}" de la polla?\nSe borrarán todas sus apuestas.`)) return;
+  try {
+    const r = await fetch(`/api/pollas/${sesion.polla_id}/miembros/${miembroId}`,{
+      method:'DELETE', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({admin_miembro_id: sesion.miembro_id})
+    });
+    const data = await r.json();
+    if (!r.ok) { alert(data.error||'Error al eliminar'); return; }
+    showMsg('okMiembro', `✓ ${nombre} eliminado de la polla.`);
+    await loadMembers();
+  } catch(e) { alert('Error de conexión'); }
+};
+
+// Enter key to add member
+['mNombre','mApellido'].forEach(id => {
+  $(id)?.addEventListener('keydown', e => { if(e.key==='Enter') addMember(); });
+});
+
+// ── BRACKET ───────────────────────────────────────────
 const BRACKET_EQUIPOS = {
   A:[{n:'México',c:'mx'},{n:'Sudáfrica',c:'za'},{n:'Corea del Sur',c:'kr'},{n:'República Checa',c:'cz'}],
   B:[{n:'Canadá',c:'ca'},{n:'Bosnia y Herzegovina',c:'ba'},{n:'Catar',c:'qa'},{n:'Suiza',c:'ch'}],
@@ -605,121 +600,92 @@ const BRACKET_FASES = [
   {id:'finalistas',   label:'Finalistas',             count:2, pts:12},
   {id:'campeon',      label:'Campeón',                count:1, pts:20},
 ];
-
-let ADMIN_BRACKET = {}; // fase -> { equipos: Set, confirmado: bool }
+let ADMIN_BRACKET = {};
 
 async function loadBracketAdmin() {
   const { data } = await sb.from('resultados_fase').select('*');
   ADMIN_BRACKET = {};
-  (data || []).forEach(r => { ADMIN_BRACKET[r.fase] = { equipos: new Set(r.equipos || []), confirmado: r.confirmado }; });
+  (data||[]).forEach(r => { ADMIN_BRACKET[r.fase]={equipos:new Set(r.equipos||[]),confirmado:r.confirmado}; });
   renderBracketAdmin();
 }
 
 function renderBracketAdmin() {
-  const con = document.getElementById('bracketAdmin');
-  if (!con) return;
-
+  const con=$('bracketAdmin'); if(!con) return;
   con.innerHTML = BRACKET_FASES.map(f => {
-    const state  = ADMIN_BRACKET[f.id] || { equipos: new Set(), confirmado: false };
-    const sel    = state.equipos;
-    const conf   = state.confirmado;
-    const count  = sel.size;
-    const full   = count >= f.count;
-
-    const teamsHtml = Object.entries(BRACKET_EQUIPOS).map(([grupo, teams]) => {
+    const st=ADMIN_BRACKET[f.id]||{equipos:new Set(),confirmado:false};
+    const sel=st.equipos, conf=st.confirmado, count=sel.size, full=count>=f.count;
+    const teamsHtml = Object.entries(BRACKET_EQUIPOS).map(([grupo,teams]) => {
       const rows = teams.map(t => {
-        const isSel = sel.has(t.n);
-        const disableCheck = conf || (!isSel && full);
-        return `<label style="display:flex;align-items:center;gap:6px;padding:4px 6px;cursor:${conf?'default':'pointer'};border:1.5px solid ${isSel?'var(--nodo)':'transparent'};margin-bottom:2px;border-radius:2px;background:${isSel?'rgba(0,17,102,.06)':'transparent'};font-size:11px;font-family:'Spline Sans Mono',monospace" data-fase="${f.id}" data-equipo="${t.n}">
-          <input type="checkbox" ${isSel?'checked':''} ${disableCheck?'disabled':''} style="width:14px;height:14px;accent-color:var(--nodo);cursor:${conf?'default':'pointer'}">
-          ${flag(t.c,t.n)}
-          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.n}</span>
+        const isSel=sel.has(t.n), disable=conf||(!isSel&&full);
+        return `<label style="display:flex;align-items:center;gap:6px;padding:4px 6px;cursor:${conf?'default':'pointer'};border:1.5px solid ${isSel?'var(--nodo)':'transparent'};margin-bottom:2px;border-radius:2px;background:${isSel?'rgba(0,17,102,.06)':'transparent'};font-size:11px" data-fase="${f.id}" data-equipo="${t.n}">
+          <input type="checkbox" ${isSel?'checked':''} ${disable?'disabled':''} style="width:13px;height:13px;accent-color:var(--nodo)">
+          ${flag(t.c,t.n)}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.n}</span>
         </label>`;
       }).join('');
-      return `<div><div style="font-family:'Spline Sans Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--nodo);font-weight:700;margin-bottom:3px;border-bottom:1px solid rgba(0,17,102,.12);padding-bottom:2px">Grupo ${grupo}</div>${rows}</div>`;
+      return `<div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--nodo);font-weight:700;margin-bottom:3px;border-bottom:1px solid rgba(0,17,102,.1);padding-bottom:2px">Grupo ${grupo}</div>${rows}</div>`;
     }).join('');
-
-    return `<div style="background:var(--card);border:2px solid var(--nodo);box-shadow:3px 3px 0 var(--nodo);margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--nodo);color:var(--blanco);flex-wrap:wrap;gap:8px">
+    return `<div class="bracket-fase">
+      <div class="bracket-head">
         <div>
-          <div style="font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--amarillo)">${f.label}</div>
-          <div style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:rgba(255,255,255,.6)">Selecciona ${f.count} equipo${f.count>1?'s':''} · ${f.pts} pts cada acierto para usuarios</div>
+          <div class="bracket-title">${f.label}</div>
+          <div class="bracket-sub">Selecciona ${f.count} equipo${f.count>1?'s':''} · ${f.pts} pts por acierto para usuarios</div>
         </div>
-        ${conf ? `<span style="background:#16a34a;color:#fff;font-family:'Spline Sans Mono',monospace;font-size:10px;padding:3px 10px;font-weight:700">✓ CONFIRMADO</span>` : `<span style="background:var(--amarillo);color:var(--nodo);font-family:'Spline Sans Mono',monospace;font-size:10px;padding:3px 10px;font-weight:700">PENDIENTE</span>`}
+        ${conf
+          ? `<span class="bracket-status" style="background:var(--green);color:#fff">✓ CONFIRMADO</span>`
+          : `<span class="bracket-status" style="background:var(--amarillo);color:var(--nodo)">PENDIENTE</span>`}
       </div>
-      <div style="padding:8px 14px;font-family:'Spline Sans Mono',monospace;font-size:11px;border-bottom:1px solid rgba(0,17,102,.1);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span id="admin-bc-cnt-${f.id}" style="color:${full?'var(--rojo)':'var(--grey)'};font-weight:${full?700:400}">${count}/${f.count} seleccionados</span>
-        ${!conf ? `
-          <button class="btn primary" style="font-size:10px;padding:4px 12px" onclick="saveFaseAdmin('${f.id}',false)">💾 Guardar borrador</button>
-          <button class="btn danger" style="font-size:10px;padding:4px 12px" onclick="saveFaseAdmin('${f.id}',true)" ${count<f.count?'disabled title="Selecciona los '+f.count+' equipos primero"':''}>✓ Confirmar y dar puntos</button>
-        ` : `
-          <button class="btn" style="font-size:10px;padding:4px 12px;border-color:var(--rojo);color:var(--rojo)" onclick="desconfirmarFase('${f.id}')">↩ Desconfirmar (editar)</button>
-        `}
+      <div style="padding:8px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:1px solid rgba(0,17,102,.1)">
+        <span id="bc-cnt-${f.id}" style="font-size:11px;font-weight:${full?700:400};color:${full?'var(--rojo)':'var(--grey)'}">${count}/${f.count} seleccionados</span>
+        ${!conf
+          ? `<button class="btn btn-outline btn-sm" onclick="saveFaseAdmin('${f.id}',false)">💾 Guardar borrador</button>
+             <button class="btn btn-danger btn-sm" onclick="saveFaseAdmin('${f.id}',true)" ${count<f.count?'disabled title="Selecciona todos primero"':''}>✓ Confirmar y dar puntos</button>`
+          : `<button class="btn btn-sm" style="border-color:var(--rojo);color:var(--rojo)" onclick="desconfirmarFase('${f.id}')">↩ Desconfirmar (editar)</button>`}
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;padding:10px 14px" id="admin-teams-${f.id}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;padding:10px 14px" id="bteams-${f.id}">
         ${teamsHtml}
       </div>
     </div>`;
   }).join('');
 
-  // Listeners
   con.querySelectorAll('[data-fase][data-equipo] input[type=checkbox]').forEach(cb => {
     cb.addEventListener('change', () => {
-      const label  = cb.closest('[data-fase]');
-      const faseId = label.dataset.fase;
-      const equipo = label.dataset.equipo;
-      const fase   = BRACKET_FASES.find(f => f.id === faseId);
-      if (!fase) return;
-      if (!ADMIN_BRACKET[faseId]) ADMIN_BRACKET[faseId] = { equipos: new Set(), confirmado: false };
-      if (ADMIN_BRACKET[faseId].confirmado) { cb.checked = !cb.checked; return; }
-      if (cb.checked) {
-        if (ADMIN_BRACKET[faseId].equipos.size >= fase.count) { cb.checked = false; return; }
+      const lbl=cb.closest('[data-fase]'), faseId=lbl.dataset.fase, equipo=lbl.dataset.equipo;
+      const fase=BRACKET_FASES.find(f=>f.id===faseId); if(!fase) return;
+      if(!ADMIN_BRACKET[faseId]) ADMIN_BRACKET[faseId]={equipos:new Set(),confirmado:false};
+      if(ADMIN_BRACKET[faseId].confirmado){cb.checked=!cb.checked;return;}
+      if(cb.checked){
+        if(ADMIN_BRACKET[faseId].equipos.size>=fase.count){cb.checked=false;return;}
         ADMIN_BRACKET[faseId].equipos.add(equipo);
-      } else {
-        ADMIN_BRACKET[faseId].equipos.delete(equipo);
-      }
-      const cnt  = ADMIN_BRACKET[faseId].equipos.size;
-      const full2 = cnt >= fase.count;
-      const cntEl = document.getElementById('admin-bc-cnt-' + faseId);
-      if (cntEl) { cntEl.textContent = `${cnt}/${fase.count} seleccionados`; cntEl.style.color = full2 ? 'var(--rojo)' : 'var(--grey)'; cntEl.style.fontWeight = full2 ? 700 : 400; }
-      document.getElementById('admin-teams-' + faseId)
-        ?.querySelectorAll('input[type=checkbox]')
-        .forEach(box => { if (!box.checked) box.disabled = full2; });
-      // Habilitar botón Confirmar si ya tiene el número correcto
-      const btnConf = con.querySelector(`#bf-admin-${faseId} .btn.danger`);
-      // Re-render only the counter (full re-render would lose state)
+      } else ADMIN_BRACKET[faseId].equipos.delete(equipo);
+      const cnt=ADMIN_BRACKET[faseId].equipos.size, full2=cnt>=fase.count;
+      const cEl=$('bc-cnt-'+faseId);
+      if(cEl){cEl.textContent=`${cnt}/${fase.count} seleccionados`;cEl.style.color=full2?'var(--rojo)':'var(--grey)';cEl.style.fontWeight=full2?700:400;}
+      document.getElementById('bteams-'+faseId)?.querySelectorAll('input[type=checkbox]').forEach(b=>{ if(!b.checked) b.disabled=full2; });
     });
   });
 }
 
 window.saveFaseAdmin = async (faseId, confirmar) => {
-  const state   = ADMIN_BRACKET[faseId] || { equipos: new Set(), confirmado: false };
-  const equipos = Array.from(state.equipos);
-  if (confirmar && !confirm(`¿Confirmar los ${equipos.length} equipos clasificados en "${faseId}"? Los usuarios recibirán puntos inmediatamente. Esta acción es importante — podrás deshacerla si hay error.`)) return;
-  const { error } = await sb.from('resultados_fase').upsert(
-    { fase: faseId, equipos, confirmado: confirmar, updated_at: new Date().toISOString() },
-    { onConflict: 'fase' }
-  );
-  if (error) { alert('Error: ' + error.message); return; }
-  if (ADMIN_BRACKET[faseId]) ADMIN_BRACKET[faseId].confirmado = confirmar;
-  alert(confirmar ? `✓ ${faseId} confirmado. Los usuarios recibirán sus puntos.` : `✓ Borrador guardado.`);
+  const st=ADMIN_BRACKET[faseId]||{equipos:new Set()};
+  const equipos=Array.from(st.equipos);
+  if(confirmar && !confirm(`¿Confirmar los ${equipos.length} equipos clasificados en "${faseId}"?\nLos usuarios recibirán sus puntos inmediatamente.`)) return;
+  const {error}=await sb.from('resultados_fase').upsert({fase:faseId,equipos,confirmado:confirmar,updated_at:new Date().toISOString()},{onConflict:'fase'});
+  if(error){alert('Error: '+error.message);return;}
+  if(ADMIN_BRACKET[faseId]) ADMIN_BRACKET[faseId].confirmado=confirmar;
+  alert(confirmar?`✓ ${faseId} confirmado. Los usuarios ya tienen sus puntos.`:'✓ Borrador guardado.');
   await loadBracketAdmin();
 };
 
-window.desconfirmarFase = async (faseId) => {
-  if (!confirm(`¿Desconfirmar "${faseId}" y permitir edición? Los puntos se recalcularán.`)) return;
-  const state   = ADMIN_BRACKET[faseId] || { equipos: new Set() };
-  const equipos = Array.from(state.equipos);
-  await sb.from('resultados_fase').upsert(
-    { fase: faseId, equipos, confirmado: false, updated_at: new Date().toISOString() },
-    { onConflict: 'fase' }
-  );
+window.desconfirmarFase = async faseId => {
+  if(!confirm(`¿Desconfirmar "${faseId}" y permitir edición?\nLos puntos se recalcularán.`)) return;
+  const st=ADMIN_BRACKET[faseId]||{equipos:new Set()};
+  await sb.from('resultados_fase').upsert({fase:faseId,equipos:Array.from(st.equipos),confirmado:false,updated_at:new Date().toISOString()},{onConflict:'fase'});
   await loadBracketAdmin();
 };
 
-// Cargar bracket admin al inicializar el panel
-const origInit = window.onload;
-document.addEventListener('admin-ready', () => loadBracketAdmin());
+// Load initial tab (tablero)
+loaded.tablero = true;
+loadLeaderboard();
 </script>
 </body>
 </html>

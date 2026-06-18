@@ -486,7 +486,7 @@ async function loginAdmin() {
 
     document.getElementById('okAdmin').textContent = `¡Bienvenido, ${data.miembro.nombre}! Redirigiendo...`;
     document.getElementById('okAdmin').classList.add('show');
-    setTimeout(() => { location.href = '/polla.html'; }, 1200);
+    setTimeout(() => { location.href = '/admin'; }, 1200);
 
   } catch(e) {
     showErr('errAdmin', 'Error de conexión. Intenta de nuevo.');

@@ -738,13 +738,20 @@ app.get('/api/pollas/:codigo', async (req, res) => {
 // El admin de la polla elimina a un miembro
 app.delete('/api/pollas/:pollaId/miembros/:miembroId', async (req, res) => {
   const { pollaId, miembroId } = req.params;
-  const { password_admin } = req.body || {};
-  if (!password_admin) return res.status(400).json({ error: 'Se requiere la contraseña del administrador' });
+  const { password_admin, admin_miembro_id } = req.body || {};
+  if (!password_admin && !admin_miembro_id)
+    return res.status(400).json({ error: 'Se requiere password_admin o admin_miembro_id' });
 
-  const pollas = await sbRest(`/pollas?id=eq.${pollaId}&select=password_admin`);
-  if (!pollas?.length) return res.status(404).json({ error: 'Polla no encontrada' });
-  if (pollas[0].password_admin !== password_admin.trim())
-    return res.status(403).json({ error: 'Contraseña de administrador incorrecta' });
+  if (admin_miembro_id) {
+    // Verificar que quien pide es el admin de esta polla
+    const adminCheck = await sbRest(`/polla_miembros?id=eq.${admin_miembro_id}&polla_id=eq.${pollaId}&es_admin=eq.true&select=id`);
+    if (!adminCheck?.length) return res.status(403).json({ error: 'No autorizado — no eres el admin de esta polla' });
+  } else {
+    const pollas = await sbRest(`/pollas?id=eq.${pollaId}&select=password_admin`);
+    if (!pollas?.length) return res.status(404).json({ error: 'Polla no encontrada' });
+    if (pollas[0].password_admin !== password_admin.trim())
+      return res.status(403).json({ error: 'Contraseña de administrador incorrecta' });
+  }
 
   const miembro = await sbRest(`/polla_miembros?id=eq.${miembroId}&polla_id=eq.${pollaId}&select=es_admin`);
   if (!miembro?.length) return res.status(404).json({ error: 'Miembro no encontrado' });
