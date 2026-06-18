@@ -5,18 +5,21 @@
 -- ============================================================
 
 -- ============================================================
--- 0. LIMPIEZA OPCIONAL (quita los comentarios si arrancas de cero)
+-- 0. LIMPIEZA TOTAL — borra todo para empezar fresco
+-- Incluye tablas del schema viejo (usuarios, apuestas con usuario_id, etc.)
 -- ============================================================
--- DROP VIEW  IF EXISTS v_tabla_polla;
--- DROP TABLE IF EXISTS asistencias CASCADE;
--- DROP TABLE IF EXISTS pronosticos_fase CASCADE;
--- DROP TABLE IF EXISTS apuestas CASCADE;
--- DROP TABLE IF EXISTS polla_miembros CASCADE;
--- DROP TABLE IF EXISTS pollas CASCADE;
--- DROP TABLE IF EXISTS resultados_fase CASCADE;
--- DROP TABLE IF EXISTS resultados CASCADE;
--- DROP TABLE IF EXISTS partidos CASCADE;
--- DROP FUNCTION IF EXISTS set_updated_at;
+DROP VIEW  IF EXISTS v_tabla_polla;
+DROP VIEW  IF EXISTS v_tabla;
+DROP TABLE IF EXISTS asistencias       CASCADE;
+DROP TABLE IF EXISTS pronosticos_fase  CASCADE;
+DROP TABLE IF EXISTS apuestas          CASCADE;
+DROP TABLE IF EXISTS polla_miembros    CASCADE;
+DROP TABLE IF EXISTS pollas            CASCADE;
+DROP TABLE IF EXISTS resultados_fase   CASCADE;
+DROP TABLE IF EXISTS resultados        CASCADE;
+DROP TABLE IF EXISTS partidos          CASCADE;
+DROP TABLE IF EXISTS usuarios          CASCADE;
+DROP FUNCTION IF EXISTS set_updated_at() CASCADE;
 
 -- ============================================================
 -- 1. FUNCIÓN GENÉRICA updated_at
