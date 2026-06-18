@@ -144,17 +144,22 @@ footer span{color:var(--amarillo)}
       </div>
     </div>
 
-    <!-- Cards de acción -->
-    <div class="action-grid">
-      <div class="action-card primary" onclick="abrirModal('crear')">
-        <span class="card-icon">🚀</span>
-        <div class="card-title">Crear mi Polla</div>
-        <div class="card-desc">Sé el organizador. Pon el nombre a tu grupo, crea una contraseña de admin y comparte el código con hasta 29 amigos.</div>
+    <!-- Cards de acción — 3 opciones -->
+    <div class="action-grid" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="action-card primary" onclick="abrirModal('unirse')">
+        <span class="card-icon">🔑</span>
+        <div class="card-title">Soy participante</div>
+        <div class="card-desc">Tengo el código. Entro con mi nombre, sin contraseña.</div>
       </div>
-      <div class="action-card" onclick="abrirModal('unirse')">
-        <span class="card-icon">🔗</span>
-        <div class="card-title">Unirme a una Polla</div>
-        <div class="card-desc">¿Alguien ya te compartió un código? Úsalo para entrar, pon tu nombre y listo. Sin registro complicado.</div>
+      <div class="action-card" style="border-color:#001166" onclick="abrirModal('admin')">
+        <span class="card-icon">🛡️</span>
+        <div class="card-title" style="color:#001166">Soy el Admin</div>
+        <div class="card-desc">Gestiono la polla. Entro con código + contraseña de admin.</div>
+      </div>
+      <div class="action-card" onclick="abrirModal('crear')">
+        <span class="card-icon">🚀</span>
+        <div class="card-title">Crear Polla nueva</div>
+        <div class="card-desc">Organizo un grupo nuevo. Le pongo nombre y contraseña.</div>
       </div>
     </div>
 
@@ -182,6 +187,33 @@ footer span{color:var(--amarillo)}
 </main>
 
 <footer>Polla Mundialista · <span>FIFA World Cup 2026</span> · USA · CAN · MEX</footer>
+
+<!-- MODAL: Admin Login -->
+<div class="modal-overlay" id="modalAdmin">
+  <div class="modal">
+    <button class="modal-close" onclick="cerrarModales()">✕</button>
+    <h2 style="color:#001166">🛡️ Acceso Admin</h2>
+    <div class="modal-sub">Solo el organizador — requiere contraseña</div>
+
+    <div style="background:#f0f4ff;border-left:3px solid #001166;padding:10px 14px;font-size:12px;color:#334;margin-bottom:20px;line-height:1.6">
+      El acceso de admin te permite <b>gestionar miembros</b> y ver el panel de control de tu polla.
+    </div>
+
+    <div class="msg-error" id="errAdmin"></div>
+    <div class="msg-success" id="okAdmin"></div>
+    <div class="field">
+      <label>Código de tu Polla</label>
+      <input type="text" id="aCodigo" placeholder="Ej: ABC123" maxlength="8" style="text-transform:uppercase;letter-spacing:.15em;font-size:20px;font-weight:700">
+    </div>
+    <div class="field">
+      <label>Contraseña Admin</label>
+      <input type="password" id="aPassword" placeholder="La que pusiste al crear la polla" maxlength="60">
+    </div>
+    <button class="btn btn-primary" id="btnAdmin" onclick="loginAdmin()" style="background:#001166">Entrar como Admin 🛡️</button>
+    <div class="or">o</div>
+    <button class="btn btn-secondary" onclick="abrirModal('unirse')">Entrar como participante</button>
+  </div>
+</div>
 
 <!-- MODAL: Crear Polla -->
 <div class="modal-overlay" id="modalCrear">
@@ -220,25 +252,35 @@ footer span{color:var(--amarillo)}
       <div style="font-size:13px;color:var(--grey);margin:8px 0 20px">¡Tu polla está lista! Comparte este código:</div>
       <div class="invite-label">Código de invitación</div>
       <div class="invite-code" id="creCodigoInvite" title="Click para copiar"></div>
-      <div class="invite-note">Tus amigos lo ingresan en "Unirme a una Polla" · Máx. 30 personas</div>
-      <button class="btn btn-primary" style="margin-top:24px" onclick="irAPolla()">Entrar a mi Polla →</button>
-      <button class="btn btn-secondary" style="margin-top:10px" onclick="copiarCodigo()">📋 Copiar código</button>
+      <div class="invite-note">Comparte este código por WhatsApp · Máx. 30 personas</div>
+      <div style="background:#f0f4ff;border-left:3px solid #001166;padding:10px 14px;font-size:12px;color:#334;margin-top:12px;text-align:left;line-height:1.6">
+        <b>¿Cómo volver a entrar después?</b><br>
+        Ve a la página principal → "Entrar a mi Polla" → pon el código <strong id="creCodigoInvite2"></strong> + tu nombre.
+      </div>
+      <button class="btn btn-primary" style="margin-top:20px" onclick="irAPolla()">Entrar a mi Polla →</button>
+      <button class="btn btn-secondary" style="margin-top:10px" onclick="copiarCodigo()">📋 Copiar enlace de invitación</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL: Unirse a Polla -->
+<!-- MODAL: Unirse / Entrar a Polla -->
 <div class="modal-overlay" id="modalUnirse">
   <div class="modal">
     <button class="modal-close" onclick="cerrarModales()">✕</button>
-    <h2>Unirme a una Polla</h2>
-    <div class="modal-sub">Ingresa el código que te compartieron</div>
+    <h2>Entrar a tu Polla</h2>
+    <div class="modal-sub">Primera vez o regreso — funciona igual</div>
+
+    <div style="background:#f0f4ff;border-left:3px solid #001166;padding:10px 14px;font-size:12px;color:#334;margin-bottom:20px;line-height:1.6">
+      <b>¿Primera vez?</b> Pon el código + tu nombre y entras.<br>
+      <b>¿Ya estabas?</b> Pon el mismo nombre que usaste y vuelves directo.
+    </div>
 
     <div class="msg-error" id="errUnirse"></div>
     <div class="msg-success" id="okUnirse"></div>
     <div class="field">
-      <label>Código de Invitación</label>
+      <label>Código de la Polla</label>
       <input type="text" id="uCodigo" placeholder="Ej: ABC123" maxlength="8" style="text-transform:uppercase;letter-spacing:.15em;font-size:20px;font-weight:700">
+      <div class="hint">El organizador te lo compartió por WhatsApp o mensaje</div>
     </div>
     <div class="field">
       <label>Tu Nombre</label>
@@ -246,8 +288,9 @@ footer span{color:var(--amarillo)}
         <input type="text" id="uNombre" placeholder="Nombre" maxlength="60">
         <input type="text" id="uApellido" placeholder="Apellido" maxlength="60">
       </div>
+      <div class="hint">Si ya estabas registrado, usa exactamente el mismo nombre</div>
     </div>
-    <button class="btn btn-primary" id="btnUnirse" onclick="unirsePolla()">Unirme →</button>
+    <button class="btn btn-primary" id="btnUnirse" onclick="unirsePolla()">Entrar a la Polla →</button>
     <div class="or">o</div>
     <button class="btn btn-secondary" onclick="abrirModal('crear')">Crear mi propia Polla</button>
   </div>
@@ -283,7 +326,9 @@ window.onload = () => {
 // ── Modales ──────────────────────────────────────────────────────
 function abrirModal(tipo) {
   document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
-  document.getElementById(tipo === 'crear' ? 'modalCrear' : 'modalUnirse').classList.add('active');
+  const ids = { crear: 'modalCrear', unirse: 'modalUnirse', admin: 'modalAdmin' };
+  const id = ids[tipo] || 'modalUnirse';
+  document.getElementById(id).classList.add('active');
 }
 function cerrarModales() {
   document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
@@ -337,6 +382,8 @@ async function crearPolla() {
     document.getElementById('formCrear').style.display = 'none';
     document.getElementById('creNombrePolla').textContent = data.polla.nombre;
     document.getElementById('creCodigoInvite').textContent = data.polla.codigo_invite;
+    const c2 = document.getElementById('creCodigoInvite2');
+    if (c2) c2.textContent = data.polla.codigo_invite;
     document.getElementById('pollaCreada').classList.add('show');
 
   } catch(e) {
@@ -405,8 +452,54 @@ async function unirsePolla() {
   }
 }
 
+// ── Admin Login ──────────────────────────────────────────────────
+async function loginAdmin() {
+  hideMsg('errAdmin');
+  hideMsg('okAdmin');
+  const codigo_invite  = document.getElementById('aCodigo').value.trim().toUpperCase();
+  const password_admin = document.getElementById('aPassword').value.trim();
+
+  if (!codigo_invite || codigo_invite.length < 4) return showErr('errAdmin', 'Ingresa el código de tu polla.');
+  if (!password_admin) return showErr('errAdmin', 'Ingresa la contraseña de administrador.');
+
+  const btn = document.getElementById('btnAdmin');
+  btn.disabled = true; btn.textContent = 'Verificando...';
+
+  try {
+    const r = await fetch('/api/pollas/admin-login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ codigo_invite, password_admin })
+    });
+    const data = await r.json();
+    if (!r.ok) { showErr('errAdmin', data.error || 'No se pudo iniciar sesión'); return; }
+
+    saveSession({
+      polla_id: data.polla.id,
+      miembro_id: data.miembro.id,
+      nombre: data.miembro.nombre,
+      apellido: data.miembro.apellido,
+      es_admin: true,
+      polla_nombre: data.polla.nombre,
+      codigo_invite: data.polla.codigo_invite
+    });
+
+    document.getElementById('okAdmin').textContent = `¡Bienvenido, ${data.miembro.nombre}! Redirigiendo...`;
+    document.getElementById('okAdmin').classList.add('show');
+    setTimeout(() => { location.href = '/polla.html'; }, 1200);
+
+  } catch(e) {
+    showErr('errAdmin', 'Error de conexión. Intenta de nuevo.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Entrar como Admin 🛡️';
+  }
+}
+
 // Enter en campos de código
 document.getElementById('uCodigo')?.addEventListener('input', e => {
+  e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+});
+document.getElementById('aCodigo')?.addEventListener('input', e => {
   e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
 });
 document.addEventListener('keydown', e => {

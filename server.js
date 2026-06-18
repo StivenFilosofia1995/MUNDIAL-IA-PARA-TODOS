@@ -624,6 +624,17 @@ app.get('/api/debug-live', async (req, res) => {
 // ── MULTI-TENANT: gestión de pollas ─────────────────────────────
 app.use(express.json());
 
+// Diagnóstico: verifica si las tablas multi-tenant existen
+app.get('/api/debug-tablas', async (req, res) => {
+  const tablas = ['pollas', 'polla_miembros', 'apuestas', 'partidos', 'resultados'];
+  const resultados = {};
+  for (const t of tablas) {
+    const r = await sbRest(`/${t}?select=id&limit=1`);
+    resultados[t] = r === null ? '❌ ERROR / no existe' : `✅ OK (${r.length} filas visibles)`;
+  }
+  res.json(resultados);
+});
+
 function genCodigo() {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   let c = '';
@@ -650,7 +661,7 @@ app.post('/api/pollas/crear', async (req, res) => {
     nombre: nombre.trim(), descripcion: descripcion.trim(),
     codigo_invite, password_admin: password_admin.trim(), max_miembros: 30
   });
-  if (!pollaRes?.[0]) return res.status(500).json({ error: 'Error al crear la polla en base de datos' });
+  if (!pollaRes?.[0]) return res.status(500).json({ error: 'Error al crear la polla — ¿corriste SCHEMA_MULTITENANT.sql en Supabase? Revisa la consola del servidor para más detalles.' });
 
   const polla = pollaRes[0];
   const miembroRes = await sbPost('polla_miembros', {
@@ -691,6 +702,25 @@ app.post('/api/pollas/unirse', async (req, res) => {
   if (!miembroRes?.[0]) return res.status(500).json({ error: 'Error al unirse a la polla' });
 
   res.json({ polla, miembro: miembroRes[0] });
+});
+
+// Login del administrador (requiere contraseña)
+app.post('/api/pollas/admin-login', async (req, res) => {
+  const { codigo_invite, password_admin } = req.body || {};
+  if (!codigo_invite?.trim() || !password_admin?.trim())
+    return res.status(400).json({ error: 'Faltan campos: codigo_invite, password_admin' });
+
+  const pollas = await sbRest(`/pollas?codigo_invite=eq.${codigo_invite.trim().toUpperCase()}&select=*`);
+  if (!pollas?.length) return res.status(404).json({ error: 'Código de polla no encontrado.' });
+
+  const polla = pollas[0];
+  if (polla.password_admin !== password_admin.trim())
+    return res.status(403).json({ error: 'Contraseña de administrador incorrecta.' });
+
+  const admins = await sbRest(`/polla_miembros?polla_id=eq.${polla.id}&es_admin=eq.true&select=*`);
+  if (!admins?.length) return res.status(500).json({ error: 'No se encontró el miembro administrador.' });
+
+  res.json({ polla, miembro: admins[0] });
 });
 
 // Info de una polla + sus miembros (por código de invitación)
