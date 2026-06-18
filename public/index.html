@@ -3,14 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LA POLLA NODO — Mundial 2026</title>
-<script src="/config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;600;700&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
+<title>Polla Mundialista 2026 — ¡Arma la tuya!</title>
 <style>
 :root{
-  --nodo:#001166;       /* azul marino NODO */
-  --nodo-mid:#002299;   /* azul medio */
+  --nodo:#001166;
+  --nodo-mid:#002299;
   --amarillo:#FCD116;
   --rojo:#CE1126;
   --blanco:#ffffff;
@@ -18,190 +15,403 @@
   --card:#ffffff;
   --grey:#6b7280;
   --ink:#0a0e1a;
+  --green:#16a34a;
+  --green-light:#dcfce7;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--paper);color:var(--ink);font-family:'Archivo',sans-serif;min-height:100vh;display:flex;flex-direction:column}
-/* TRICOLOR COLOMBIA */
+body{background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;display:flex;flex-direction:column}
 .tricolor{height:5px;background:linear-gradient(90deg,var(--amarillo) 0 40%,var(--nodo) 40% 70%,var(--rojo) 70% 100%)}
-/* HEADER */
-header{background:var(--nodo);color:var(--blanco);padding:22px 5vw;border-bottom:4px solid var(--amarillo);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
-.nodo-logo{display:flex;align-items:center;gap:14px}
-.nodo-icon{width:48px;height:48px;background:var(--blanco);border-radius:4px;display:flex;align-items:center;justify-content:center;flex:none}
-.nodo-icon svg{width:30px;height:30px}
-.nodo-text{display:flex;flex-direction:column;gap:1px}
-.nodo-name{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:.12em;color:var(--blanco);text-transform:uppercase;line-height:1}
-.nodo-name sup{font-size:10px;vertical-align:super;letter-spacing:0}
-.nodo-eafit{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.6);font-family:'Spline Sans Mono',monospace}
-.head-right{text-align:right;font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.6);line-height:1.6}
-.head-right b{color:var(--amarillo)}
-/* HERO */
-.hero{background:var(--nodo);color:var(--blanco);padding:40px 5vw 50px;text-align:center;position:relative;overflow:hidden}
-.hero::after{content:'⚽';position:absolute;right:-20px;bottom:-30px;font-size:180px;opacity:.04}
-.hero h1{font-family:'Archivo Black',sans-serif;font-size:clamp(32px,6vw,72px);letter-spacing:-.02em;line-height:.95}
+header{background:var(--nodo);color:var(--blanco);padding:20px 5vw;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit}
+.logo-ball{font-size:28px}
+.logo-text{font-size:20px;font-weight:900;letter-spacing:.05em;color:var(--amarillo)}
+.logo-sub{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:1px}
+.btn-dashboard{background:transparent;border:1.5px solid rgba(255,255,255,.3);color:rgba(255,255,255,.8);padding:8px 18px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;text-decoration:none;display:inline-block;transition:all .2s}
+.btn-dashboard:hover{border-color:var(--amarillo);color:var(--amarillo)}
+.hero{background:linear-gradient(160deg,#000e44 0%,var(--nodo-mid) 100%);color:var(--blanco);padding:60px 5vw 70px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 60% 40%,rgba(252,209,22,.08) 0%,transparent 60%)}
+.hero-ball{font-size:72px;display:block;margin-bottom:20px;filter:drop-shadow(0 8px 24px rgba(0,0,0,.4))}
+.hero h1{font-size:clamp(28px,6vw,64px);font-weight:900;line-height:.95;letter-spacing:-.02em;margin-bottom:16px}
 .hero h1 em{font-style:normal;color:var(--amarillo)}
-.hero .sub{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:12px}
-main{flex:1;padding:40px 5vw;background:var(--paper)}
-.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:900px;margin:0 auto;align-items:start}
-@media(max-width:700px){.main-grid{grid-template-columns:1fr}}
-.dash-card{background:var(--nodo);border:2px solid var(--nodo);box-shadow:6px 6px 0 var(--amarillo);padding:36px;color:var(--blanco)}
-.dash-card h2{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--amarillo);margin-bottom:6px}
-.dash-card .note{font-family:'Spline Sans Mono',monospace;font-size:10px;color:rgba(255,255,255,.55);margin-bottom:24px;letter-spacing:.06em;text-transform:uppercase}
-.dash-features{list-style:none;margin-bottom:28px;display:flex;flex-direction:column;gap:10px}
-.dash-features li{font-size:13px;color:rgba(255,255,255,.85);display:flex;align-items:center;gap:10px}
-.dash-features li::before{content:'';width:8px;height:8px;background:var(--amarillo);flex:none;border-radius:50%}
-.btn-dash{font-family:'Spline Sans Mono',monospace;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;
-  border:2px solid var(--amarillo);background:var(--amarillo);color:var(--nodo);padding:14px 20px;cursor:pointer;
-  box-shadow:4px 4px 0 rgba(255,255,255,.3);transition:all .1s;width:100%;display:block;text-align:center;text-decoration:none}
-.btn-dash:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 rgba(255,255,255,.4)}
-/* CARD */
-.card{background:var(--card);border:2px solid var(--nodo);box-shadow:6px 6px 0 var(--nodo);padding:36px;width:100%;max-width:440px}
-.card h2{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--nodo);margin-bottom:4px}
-.card .note{font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--grey);margin-bottom:22px;letter-spacing:.06em;text-transform:uppercase}
-label{display:block;font-family:'Spline Sans Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.12em;margin-bottom:5px;font-weight:600;color:var(--ink)}
-input,select{font-family:'Spline Sans Mono',monospace;font-size:13px;border:2px solid var(--nodo);padding:10px 12px;background:var(--card);color:var(--ink);border-radius:0;outline:none;width:100%;display:block;margin-bottom:14px;transition:border-color .15s}
-input:focus,select:focus{border-color:var(--nodo-mid);box-shadow:0 0 0 3px rgba(0,17,102,.1)}
-.btn{font-family:'Spline Sans Mono',monospace;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;
-  border:2px solid var(--nodo);background:var(--amarillo);color:var(--nodo);padding:12px 20px;cursor:pointer;
-  box-shadow:4px 4px 0 var(--nodo);transition:all .1s;width:100%;display:block}
-.btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--nodo)}
-.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--nodo)}
-.btn.secondary{background:var(--card);color:var(--nodo);margin-top:10px}
-.btn.secondary:hover{background:var(--paper)}
-.divider{text-align:center;font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--grey);margin:18px 0;position:relative;letter-spacing:.08em}
-.divider::before,.divider::after{content:'';position:absolute;top:50%;width:38%;height:1px;background:rgba(0,17,102,.15)}
-.divider::before{left:0}.divider::after{right:0}
-.error{background:#fef2f2;color:#b91c1c;border:2px solid #b91c1c;padding:10px 14px;font-family:'Spline Sans Mono',monospace;font-size:11px;margin-bottom:14px;display:none}
-.success{background:#f0fdf4;color:#15803d;border:2px solid #15803d;padding:10px 14px;font-family:'Spline Sans Mono',monospace;font-size:11px;margin-bottom:14px;display:none}
-.nav-links{display:flex;gap:14px;margin-top:22px;justify-content:center}
-.nav-links a{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--nodo);text-decoration:none;border-bottom:2px solid var(--amarillo);padding-bottom:1px}
-.nav-links a:hover{background:var(--nodo);color:var(--blanco);border-color:var(--nodo);padding:1px 6px}
-footer{background:var(--nodo);color:rgba(255,255,255,.45);padding:14px 5vw;font-family:'Spline Sans Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.hero p{font-size:16px;color:rgba(255,255,255,.65);max-width:460px;margin:0 auto;line-height:1.6}
+.hero .live-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(22,163,74,.2);border:1px solid rgba(22,163,74,.4);color:#4ade80;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:100px;margin-bottom:20px}
+.live-dot{width:7px;height:7px;background:#4ade80;border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+main{flex:1;padding:48px 5vw;background:var(--paper)}
+.main-wrap{max-width:880px;margin:0 auto}
+/* Sesión activa banner */
+.session-banner{background:var(--nodo);color:var(--blanco);border-left:4px solid var(--amarillo);padding:16px 20px;margin-bottom:32px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.session-banner strong{color:var(--amarillo)}
+.session-banner small{font-size:12px;color:rgba(255,255,255,.6);display:block;margin-top:2px}
+.sbtn-group{display:flex;gap:10px;flex-wrap:wrap}
+/* Cards de acción */
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:40px}
+@media(max-width:640px){.action-grid{grid-template-columns:1fr}}
+.action-card{background:var(--card);border:2px solid #e2e8f0;padding:36px 32px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.action-card:hover{border-color:var(--nodo);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,17,102,.12)}
+.action-card.primary{background:var(--nodo);border-color:var(--nodo);color:var(--blanco)}
+.action-card.primary:hover{border-color:var(--amarillo);box-shadow:6px 6px 0 var(--amarillo)}
+.card-icon{font-size:36px;margin-bottom:16px;display:block}
+.card-title{font-size:20px;font-weight:900;letter-spacing:.02em;margin-bottom:8px}
+.action-card.primary .card-title{color:var(--amarillo)}
+.card-desc{font-size:13px;line-height:1.6;color:var(--grey)}
+.action-card.primary .card-desc{color:rgba(255,255,255,.65)}
+/* Modal / Panel */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.active{opacity:1;pointer-events:all}
+.modal{background:var(--card);width:100%;max-width:480px;padding:36px;position:relative;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:22px;font-weight:900;margin-bottom:4px;color:var(--nodo)}
+.modal .modal-sub{font-size:12px;color:var(--grey);margin-bottom:28px;letter-spacing:.06em;text-transform:uppercase}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--grey);line-height:1}
+/* Formulario */
+.field{margin-bottom:18px}
+.field label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--grey);margin-bottom:6px}
+.field input{width:100%;padding:12px 14px;border:2px solid #e2e8f0;font-size:15px;outline:none;transition:border-color .2s;background:var(--paper)}
+.field input:focus{border-color:var(--nodo)}
+.field .hint{font-size:11px;color:var(--grey);margin-top:4px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{display:block;width:100%;padding:14px;font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:none;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--nodo);color:var(--blanco)}
+.btn-primary:hover{background:#000d44}
+.btn-primary:active{transform:scale(.98)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-secondary{background:transparent;color:var(--nodo);border:2px solid var(--nodo)}
+.btn-secondary:hover{background:var(--nodo);color:var(--blanco)}
+.btn-sm{padding:8px 18px;font-size:12px;display:inline-block;width:auto}
+.btn-amarillo{background:var(--amarillo);color:var(--nodo);border:2px solid var(--amarillo)}
+.btn-amarillo:hover{background:#e8c010;border-color:#e8c010}
+/* Error / Success */
+.msg-error{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;padding:12px 14px;font-size:13px;margin-bottom:16px;display:none}
+.msg-error.show{display:block}
+.msg-success{background:var(--green-light);border:1px solid #86efac;color:var(--green);padding:12px 14px;font-size:13px;margin-bottom:16px;display:none}
+.msg-success.show{display:block}
+/* Resultado polla creada */
+.polla-creada{display:none;text-align:center;padding:8px 0}
+.polla-creada.show{display:block}
+.invite-code{font-size:36px;font-weight:900;letter-spacing:.15em;color:var(--nodo);background:var(--paper);border:3px solid var(--amarillo);padding:12px 24px;display:inline-block;margin:16px 0;cursor:pointer;transition:all .15s;user-select:all}
+.invite-code:hover{background:var(--amarillo)}
+.invite-label{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--grey);margin-bottom:4px}
+.invite-note{font-size:12px;color:var(--grey);margin-top:8px}
+/* Divider */
+.or{text-align:center;font-size:12px;color:var(--grey);margin:24px 0;display:flex;align-items:center;gap:12px}
+.or::before,.or::after{content:'';flex:1;height:1px;background:#e2e8f0}
+/* Highlights del torneo */
+.highlights{background:var(--card);border:2px solid #e2e8f0;padding:28px}
+.highlights h3{font-size:16px;font-weight:900;color:var(--nodo);margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.scores-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.score-item{background:var(--paper);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px}
+.score-teams{flex:1;line-height:1.4}
+.score-teams .local{font-weight:600}
+.score-teams .vs{font-size:10px;color:var(--grey);text-transform:uppercase;letter-spacing:.08em}
+.score-result{font-weight:900;font-size:16px;color:var(--nodo);background:var(--amarillo);padding:3px 10px;flex-none}
+footer{background:var(--nodo);color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:20px;letter-spacing:.08em;text-transform:uppercase}
+footer span{color:var(--amarillo)}
 </style>
 </head>
 <body>
+
 <div class="tricolor"></div>
 <header>
-  <div class="nodo-logo">
-    <!-- NODO icon: "n" blanco sobre fondo blanco, forma cuadrada azul -->
-    <div class="nodo-icon">
-      <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="30" height="30" fill="#001166" rx="2"/>
-        <path d="M6 22V8h3.6l8.4 9.6V8H22v14h-3.6L10 12.4V22H6z" fill="white"/>
-      </svg>
+  <a class="logo" href="/">
+    <span class="logo-ball">⚽</span>
+    <div>
+      <div class="logo-text">POLLA MUNDIALISTA</div>
+      <div class="logo-sub">FIFA World Cup 2026</div>
     </div>
-    <div class="nodo-text">
-      <div class="nodo-name">NODO<sup>^</sup></div>
-      <div class="nodo-eafit">UNIVERSIDAD EAFIT</div>
-    </div>
-  </div>
-  <div class="head-right">MUNDIAL 2026 · <b>104 PARTIDOS</b><br>EXACTO <b>3 PTS</b> · ACIERTO <b>1 PT</b></div>
+  </a>
+  <a href="/dashboard.html" class="btn-dashboard">Ver resultados →</a>
 </header>
 
-<div class="hero">
-  <h1>LA <em>POLLA</em><br>NODO 2026</h1>
-  <div class="sub">MUNDIAL FIFA · 104 PARTIDOS · HORA COLOMBIANA</div>
-</div>
+<section class="hero">
+  <span class="hero-ball">🏆</span>
+  <div class="live-pill"><span class="live-dot"></span> En vivo · Jornada 2</div>
+  <h1>Arma tu<br><em>Polla Mundialista</em></h1>
+  <p>Crea un grupo con tus amigos, predice los resultados del Mundial 2026 y compite por ser el mejor vidente del fútbol.</p>
+</section>
 
 <main>
-  <div class="main-grid">
+  <div class="main-wrap">
 
-    <!-- CARD: REGISTRO / LOGIN -->
-    <div class="card">
-      <div id="msgError" class="error"></div>
-      <div id="msgOk"    class="success"></div>
-
-      <div id="formRegistro">
-        <h2>Unirse a la polla</h2>
-        <p class="note">Registra tu nombre y apellido para apostar</p>
-        <label for="regNombre">Nombre</label>
-        <input id="regNombre" type="text" placeholder="ej. Juan" maxlength="60" autocomplete="given-name">
-        <label for="regApellido">Apellido</label>
-        <input id="regApellido" type="text" placeholder="ej. García" maxlength="60" autocomplete="family-name">
-        <button class="btn" id="btnRegistrar">⚽ Unirme a la polla</button>
-        <div class="divider">¿ya te registraste?</div>
-        <button class="btn secondary" id="btnMostrarLogin">Seleccionar mi perfil</button>
+    <!-- Banner de sesión activa -->
+    <div class="session-banner" id="sessionBanner" style="display:none">
+      <div>
+        <div>Ya tienes una sesión activa en <strong id="sbNombre"></strong></div>
+        <small id="sbPolla"></small>
       </div>
-
-      <div id="formLogin" style="display:none">
-        <h2>Seleccionar perfil</h2>
-        <p class="note">Elige tu nombre para entrar</p>
-        <label for="selUsuario">Participante</label>
-        <select id="selUsuario"><option value="">— selecciona tu nombre —</option></select>
-        <button class="btn" id="btnEntrar">🏆 Entrar a la polla</button>
-        <div class="divider">¿eres nuevo?</div>
-        <button class="btn secondary" id="btnMostrarRegistro">Registrarme</button>
+      <div class="sbtn-group">
+        <button class="btn btn-amarillo btn-sm" onclick="volverAPolla()">Continuar →</button>
+        <button class="btn btn-secondary btn-sm" onclick="cerrarSesion()">Salir</button>
       </div>
     </div>
 
-    <!-- CARD: VER PARTIDOS (sin registro) -->
-    <div class="dash-card">
-      <h2>📅 Calendario y resultados</h2>
-      <p class="note">Sin registro necesario · acceso libre</p>
-      <ul class="dash-features">
-        <li>Resultados del día en tiempo real</li>
-        <li>Próximos partidos con botón para agendar</li>
-        <li>Calendario completo de los 104 partidos</li>
-        <li>Agrega partidos a Outlook / Teams / Google Calendar</li>
-        <li>Partidos de Colombia destacados 🇨🇴</li>
-      </ul>
-      <a class="btn-dash" href="/dashboard.html">Ver partidos y resultados →</a>
+    <!-- Cards de acción -->
+    <div class="action-grid">
+      <div class="action-card primary" onclick="abrirModal('crear')">
+        <span class="card-icon">🚀</span>
+        <div class="card-title">Crear mi Polla</div>
+        <div class="card-desc">Sé el organizador. Pon el nombre a tu grupo, crea una contraseña de admin y comparte el código con hasta 29 amigos.</div>
+      </div>
+      <div class="action-card" onclick="abrirModal('unirse')">
+        <span class="card-icon">🔗</span>
+        <div class="card-title">Unirme a una Polla</div>
+        <div class="card-desc">¿Alguien ya te compartió un código? Úsalo para entrar, pon tu nombre y listo. Sin registro complicado.</div>
+      </div>
+    </div>
+
+    <!-- Resultados recientes del Mundial -->
+    <div class="highlights">
+      <h3>⚡ Últimos resultados — 18 jun 2026</h3>
+      <div class="scores-grid" id="scoresGrid">
+        <!-- Partidos jugados cargados dinámicamente -->
+        <div class="score-item"><div class="score-teams"><div class="local">México</div><div class="vs">vs Sudáfrica</div></div><div class="score-result">2 · 0</div></div>
+        <div class="score-item"><div class="score-teams"><div class="local">Corea del Sur</div><div class="vs">vs Rep. Checa</div></div><div class="score-result">2 · 1</div></div>
+        <div class="score-item"><div class="score-teams"><div class="local">Alemania</div><div class="vs">vs Curazao</div></div><div class="score-result">7 · 1</div></div>
+        <div class="score-item"><div class="score-teams"><div class="local">Estados Unidos</div><div class="vs">vs Paraguay</div></div><div class="score-result">4 · 1</div></div>
+        <div class="score-item"><div class="score-teams"><div class="local">Francia</div><div class="vs">vs Senegal</div></div><div class="score-result">3 · 1</div></div>
+        <div class="score-item"><div class="score-teams"><div class="local">Noruega</div><div class="vs">vs Irak</div></div><div class="score-result">4 · 1</div></div>
+        <div class="score-item"><div class="score-teams"><div class="local">Argentina</div><div class="vs">vs Argelia</div></div><div class="score-result">3 · 0</div></div>
+        <div class="score-item"><div class="score-teams"><div class="local">Colombia</div><div class="vs">vs Uzbekistán</div></div><div class="score-result">3 · 1</div></div>
+        <div class="score-item"><div class="score-teams"><div class="local">Inglaterra</div><div class="vs">vs Croacia</div></div><div class="score-result">4 · 2</div></div>
+        <div class="score-item"><div class="score-teams"><div class="local">Suecia</div><div class="vs">vs Túnez</div></div><div class="score-result">5 · 1</div></div>
+        <div class="score-item"><div class="score-teams"><div class="local">Rep. Checa</div><div class="vs">vs Sudáfrica</div></div><div class="score-result">1 · 1</div></div>
+        <div class="score-item"><div class="score-teams"><div class="local">Suiza</div><div class="vs">vs Bosnia y Herz.</div></div><div class="score-result">4 · 1</div></div>
+      </div>
     </div>
 
   </div>
 </main>
 
-<footer>
-  <span>LA POLLA (NODO) · MUNDIAL 2026</span>
-  <span>UNIVERSIDAD EAFIT ☕</span>
-</footer>
+<footer>Polla Mundialista · <span>FIFA World Cup 2026</span> · USA · CAN · MEX</footer>
+
+<!-- MODAL: Crear Polla -->
+<div class="modal-overlay" id="modalCrear">
+  <div class="modal">
+    <button class="modal-close" onclick="cerrarModales()">✕</button>
+    <h2>Crear tu Polla</h2>
+    <div class="modal-sub">Serás el administrador del grupo</div>
+
+    <div id="formCrear">
+      <div class="msg-error" id="errCrear"></div>
+      <div class="field">
+        <label>Nombre de la Polla</label>
+        <input type="text" id="cNombre" placeholder="Ej: Los Cracks de la Oficina" maxlength="80">
+        <div class="hint">Este es el nombre que verán todos tus participantes</div>
+      </div>
+      <div class="field">
+        <label>Tu Nombre (Admin)</label>
+        <div class="field-row">
+          <input type="text" id="cNombreAdmin" placeholder="Nombre" maxlength="60">
+          <input type="text" id="cApellidoAdmin" placeholder="Apellido" maxlength="60">
+        </div>
+      </div>
+      <div class="field">
+        <label>Contraseña Admin</label>
+        <input type="password" id="cPassword" placeholder="Para gestionar tu polla" maxlength="60">
+        <div class="hint">Guárdala bien — la necesitarás para eliminar miembros</div>
+      </div>
+      <button class="btn btn-primary" id="btnCrear" onclick="crearPolla()">Crear mi Polla 🚀</button>
+      <div class="or">o</div>
+      <button class="btn btn-secondary" onclick="abrirModal('unirse')">Unirme a una Polla existente</button>
+    </div>
+
+    <div class="polla-creada" id="pollaCreada">
+      <div style="font-size:40px;margin-bottom:12px">🎉</div>
+      <div style="font-size:20px;font-weight:900;color:var(--nodo)" id="creNombrePolla"></div>
+      <div style="font-size:13px;color:var(--grey);margin:8px 0 20px">¡Tu polla está lista! Comparte este código:</div>
+      <div class="invite-label">Código de invitación</div>
+      <div class="invite-code" id="creCodigoInvite" title="Click para copiar"></div>
+      <div class="invite-note">Tus amigos lo ingresan en "Unirme a una Polla" · Máx. 30 personas</div>
+      <button class="btn btn-primary" style="margin-top:24px" onclick="irAPolla()">Entrar a mi Polla →</button>
+      <button class="btn btn-secondary" style="margin-top:10px" onclick="copiarCodigo()">📋 Copiar código</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Unirse a Polla -->
+<div class="modal-overlay" id="modalUnirse">
+  <div class="modal">
+    <button class="modal-close" onclick="cerrarModales()">✕</button>
+    <h2>Unirme a una Polla</h2>
+    <div class="modal-sub">Ingresa el código que te compartieron</div>
+
+    <div class="msg-error" id="errUnirse"></div>
+    <div class="msg-success" id="okUnirse"></div>
+    <div class="field">
+      <label>Código de Invitación</label>
+      <input type="text" id="uCodigo" placeholder="Ej: ABC123" maxlength="8" style="text-transform:uppercase;letter-spacing:.15em;font-size:20px;font-weight:700">
+    </div>
+    <div class="field">
+      <label>Tu Nombre</label>
+      <div class="field-row">
+        <input type="text" id="uNombre" placeholder="Nombre" maxlength="60">
+        <input type="text" id="uApellido" placeholder="Apellido" maxlength="60">
+      </div>
+    </div>
+    <button class="btn btn-primary" id="btnUnirse" onclick="unirsePolla()">Unirme →</button>
+    <div class="or">o</div>
+    <button class="btn btn-secondary" onclick="abrirModal('crear')">Crear mi propia Polla</button>
+  </div>
+</div>
 
 <script>
-const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-const $ = id => document.getElementById(id);
-const showErr = m => { $('msgError').textContent = m; $('msgError').style.display='block'; $('msgOk').style.display='none'; };
-const showOk  = m => { $('msgOk').textContent = m;   $('msgOk').style.display='block'; $('msgError').style.display='none'; };
-const hideMsg = () => { $('msgError').style.display='none'; $('msgOk').style.display='none'; };
+// ── Session ──────────────────────────────────────────────────────
+const SESSION_KEY = 'polla-multitenant-sesion';
 
-// Redirigir si ya hay sesión
-const sesion = JSON.parse(localStorage.getItem('polla-sesion') || 'null');
-if (sesion && sesion.id) window.location.href = '/polla.html';
-
-async function cargarUsuarios() {
-  const { data } = await sb.from('usuarios').select('id,nombre,apellido').order('apellido');
-  const sel = $('selUsuario');
-  sel.innerHTML = '<option value="">— selecciona tu nombre —</option>' +
-    (data||[]).map(u => `<option value="${u.id}">${u.apellido}, ${u.nombre}</option>`).join('');
+function getSession() {
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch { return null; }
 }
-cargarUsuarios();
+function saveSession(s) { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); }
+function cerrarSesion() { localStorage.removeItem(SESSION_KEY); location.reload(); }
+function volverAPolla() { location.href = '/polla.html'; }
 
-$('btnRegistrar').onclick = async () => {
-  hideMsg();
-  const nombre   = $('regNombre').value.trim();
-  const apellido = $('regApellido').value.trim();
-  if (!nombre || !apellido) { showErr('Ingresa nombre y apellido.'); return; }
-  const { data, error } = await sb.from('usuarios').insert({ nombre, apellido }).select().single();
-  if (error) {
-    showErr(error.code==='23505' ? 'Ese nombre ya está registrado.' : 'Error: '+error.message);
-    return;
+// ── Al cargar ────────────────────────────────────────────────────
+window.onload = () => {
+  const s = getSession();
+  if (s?.miembro_id) {
+    document.getElementById('sessionBanner').style.display = 'flex';
+    document.getElementById('sbNombre').textContent = `${s.nombre} ${s.apellido}`;
+    document.getElementById('sbPolla').textContent = `Polla: ${s.polla_nombre || '—'} · Código: ${s.codigo_invite || '—'}`;
   }
-  localStorage.setItem('polla-sesion', JSON.stringify({ id: data.id, nombre: data.nombre, apellido: data.apellido }));
-  showOk('¡Bienvenido, ' + data.nombre + '! Entrando…');
-  setTimeout(() => { window.location.href = '/polla.html'; }, 900);
-};
-$('regApellido').addEventListener('keydown', e => { if (e.key==='Enter') $('btnRegistrar').click(); });
-
-$('btnEntrar').onclick = () => {
-  const val = $('selUsuario').value;
-  const txt = $('selUsuario').selectedOptions[0]?.text || '';
-  if (!val) { showErr('Selecciona tu nombre.'); return; }
-  const [ap, nom] = txt.split(', ');
-  localStorage.setItem('polla-sesion', JSON.stringify({ id: val, nombre: nom, apellido: ap }));
-  window.location.href = '/polla.html';
+  // Si viene con ?code=XXX en la URL, abrir modal de unirse con el código
+  const code = new URLSearchParams(location.search).get('code');
+  if (code) {
+    abrirModal('unirse');
+    document.getElementById('uCodigo').value = code.toUpperCase();
+  }
 };
 
-$('btnMostrarLogin').onclick = () => { $('formRegistro').style.display='none'; $('formLogin').style.display='block'; hideMsg(); cargarUsuarios(); };
-$('btnMostrarRegistro').onclick = () => { $('formLogin').style.display='none'; $('formRegistro').style.display='block'; hideMsg(); };
+// ── Modales ──────────────────────────────────────────────────────
+function abrirModal(tipo) {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+  document.getElementById(tipo === 'crear' ? 'modalCrear' : 'modalUnirse').classList.add('active');
+}
+function cerrarModales() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+}
+document.querySelectorAll('.modal-overlay').forEach(el =>
+  el.addEventListener('click', e => { if (e.target === el) cerrarModales(); })
+);
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.classList.add('show');
+}
+function hideMsg(id) { document.getElementById(id).classList.remove('show'); }
+
+// ── Crear Polla ──────────────────────────────────────────────────
+async function crearPolla() {
+  hideMsg('errCrear');
+  const nombre        = document.getElementById('cNombre').value.trim();
+  const nombre_admin  = document.getElementById('cNombreAdmin').value.trim();
+  const apellido_admin= document.getElementById('cApellidoAdmin').value.trim();
+  const password_admin= document.getElementById('cPassword').value.trim();
+
+  if (!nombre) return showErr('errCrear', 'Ponle un nombre a tu polla.');
+  if (!nombre_admin || !apellido_admin) return showErr('errCrear', 'Ingresa tu nombre y apellido.');
+  if (!password_admin || password_admin.length < 4) return showErr('errCrear', 'La contraseña debe tener al menos 4 caracteres.');
+
+  const btn = document.getElementById('btnCrear');
+  btn.disabled = true; btn.textContent = 'Creando...';
+
+  try {
+    const r = await fetch('/api/pollas/crear', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ nombre, nombre_admin, apellido_admin, password_admin })
+    });
+    const data = await r.json();
+    if (!r.ok) { showErr('errCrear', data.error || 'Error al crear la polla'); return; }
+
+    // Guardar sesión
+    saveSession({
+      polla_id: data.polla.id,
+      miembro_id: data.miembro.id,
+      nombre: nombre_admin,
+      apellido: apellido_admin,
+      es_admin: true,
+      polla_nombre: data.polla.nombre,
+      codigo_invite: data.polla.codigo_invite
+    });
+
+    // Mostrar resultado
+    document.getElementById('formCrear').style.display = 'none';
+    document.getElementById('creNombrePolla').textContent = data.polla.nombre;
+    document.getElementById('creCodigoInvite').textContent = data.polla.codigo_invite;
+    document.getElementById('pollaCreada').classList.add('show');
+
+  } catch(e) {
+    showErr('errCrear', 'Error de conexión. Intenta de nuevo.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Crear mi Polla 🚀';
+  }
+}
+
+function irAPolla() { location.href = '/polla.html'; }
+
+function copiarCodigo() {
+  const c = document.getElementById('creCodigoInvite').textContent;
+  const link = `${location.origin}/?code=${c}`;
+  navigator.clipboard?.writeText(link).then(() => alert('¡Enlace de invitación copiado!\n' + link))
+    .catch(() => alert('Código: ' + c));
+}
+
+document.getElementById('creCodigoInvite')?.addEventListener('click', copiarCodigo);
+
+// ── Unirse a Polla ───────────────────────────────────────────────
+async function unirsePolla() {
+  hideMsg('errUnirse');
+  hideMsg('okUnirse');
+  const codigo_invite = document.getElementById('uCodigo').value.trim().toUpperCase();
+  const nombre        = document.getElementById('uNombre').value.trim();
+  const apellido      = document.getElementById('uApellido').value.trim();
+
+  if (!codigo_invite || codigo_invite.length < 4) return showErr('errUnirse', 'Ingresa el código de invitación.');
+  if (!nombre || !apellido) return showErr('errUnirse', 'Ingresa tu nombre y apellido.');
+
+  const btn = document.getElementById('btnUnirse');
+  btn.disabled = true; btn.textContent = 'Buscando...';
+
+  try {
+    const r = await fetch('/api/pollas/unirse', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ codigo_invite, nombre, apellido })
+    });
+    const data = await r.json();
+    if (!r.ok) { showErr('errUnirse', data.error || 'No se pudo unir'); return; }
+
+    saveSession({
+      polla_id: data.polla.id,
+      miembro_id: data.miembro.id,
+      nombre: nombre,
+      apellido: apellido,
+      es_admin: data.miembro.es_admin || false,
+      polla_nombre: data.polla.nombre,
+      codigo_invite: data.polla.codigo_invite
+    });
+
+    const msg = data.relogin
+      ? `¡Bienvenido de vuelta, ${nombre}! Redirigiendo...`
+      : `¡Bienvenido a "${data.polla.nombre}", ${nombre}! Redirigiendo...`;
+    document.getElementById('okUnirse').textContent = msg;
+    document.getElementById('okUnirse').classList.add('show');
+
+    setTimeout(() => { location.href = '/polla.html'; }, 1200);
+
+  } catch(e) {
+    showErr('errUnirse', 'Error de conexión. Intenta de nuevo.');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Unirme →';
+  }
+}
+
+// Enter en campos de código
+document.getElementById('uCodigo')?.addEventListener('input', e => {
+  e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') cerrarModales();
+});
 </script>
-<script src="/music-player.js"></script>
 </body>
 </html>

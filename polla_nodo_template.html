@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LA POLLA (NODO) — Mundial 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --amarillo:#FCD116; --azul:#003893; --rojo:#CE1126;
+  --ink:#14130f; --paper:#faf6ec; --card:#ffffff; --grey:#7a766b;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper); color:var(--ink); font-family:'Bricolage Grotesque',sans-serif;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(20,19,15,.045) 27px,rgba(20,19,15,.045) 28px)}
+.tricolor{height:14px; background:linear-gradient(180deg,var(--amarillo) 0 50%,var(--azul) 50% 75%,var(--rojo) 75% 100%)}
+header{padding:30px 4vw 16px; display:flex; flex-wrap:wrap; align-items:flex-end; gap:16px; border-bottom:3px solid var(--ink)}
+h1{font-size:clamp(38px,7vw,84px); font-weight:800; line-height:.9; letter-spacing:-.03em}
+h1 em{font-style:normal; color:var(--rojo)}
+h1 .nodo{display:inline-block; background:var(--ink); color:var(--amarillo); padding:0 14px; transform:rotate(-2deg); border-radius:4px}
+.head-meta{margin-left:auto; text-align:right; font-family:'Spline Sans Mono',monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--grey)}
+.head-meta b{color:var(--ink)}
+/* TABS */
+nav{display:flex; flex-wrap:wrap; gap:0; border-bottom:3px solid var(--ink); background:var(--paper); position:sticky; top:0; z-index:40}
+nav button{font-family:'Bricolage Grotesque',sans-serif; font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:.04em;
+  background:transparent; border:none; border-right:1px solid var(--ink); padding:14px 22px; cursor:pointer; color:var(--ink)}
+nav button.on{background:var(--ink); color:var(--amarillo)}
+main{padding:26px 4vw 90px; max-width:1240px; margin:0 auto}
+.tab{display:none}.tab.on{display:block}
+h2{font-size:26px; font-weight:800; margin-bottom:6px}
+.note{font-family:'Spline Sans Mono',monospace; font-size:11px; color:var(--grey); margin-bottom:18px; letter-spacing:.04em}
+/* GENERIC */
+.btn{font-family:'Spline Sans Mono',monospace; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.08em;
+  border:2px solid var(--ink); background:var(--card); color:var(--ink); padding:9px 14px; cursor:pointer; box-shadow:3px 3px 0 var(--ink); transition:all .1s}
+.btn:hover{transform:translate(-1px,-1px); box-shadow:4px 4px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink)}
+.btn.primary{background:var(--amarillo)}
+.btn.danger{background:var(--rojo); color:#fff}
+.btn.blue{background:var(--azul); color:#fff}
+input,select{font-family:'Spline Sans Mono',monospace; font-size:13px; border:2px solid var(--ink); padding:9px 10px; background:var(--card); color:var(--ink); border-radius:0; outline:none}
+.row{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:18px}
+.flag{width:30px;height:21px;object-fit:cover;border:1px solid var(--ink); flex:none}
+.flag-tbd{width:30px;height:21px;border:1px dashed var(--ink);display:inline-flex;align-items:center;justify-content:center;font-family:'Spline Sans Mono',monospace;font-size:8px;flex:none;background:#eee}
+/* BET CARDS */
+.bets-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:14px}
+.bet-card{background:var(--card); border:2px solid var(--ink); box-shadow:4px 4px 0 var(--ink); padding:14px}
+.bet-card.locked{opacity:.55; background:#efece2}
+.bet-top{display:flex; justify-content:space-between; font-family:'Spline Sans Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--grey); margin-bottom:10px}
+.bet-teams{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.bt{display:flex; align-items:center; gap:8px; font-weight:700; font-size:15px; min-width:0}
+.bt span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.score-in{width:46px; text-align:center; font-size:18px; font-weight:600; padding:6px 2px}
+.bet-bottom{display:flex; justify-content:space-between; align-items:center; margin-top:10px; font-family:'Spline Sans Mono',monospace; font-size:10px; color:var(--grey)}
+.pts-chip{font-family:'Spline Sans Mono',monospace; font-size:10px; padding:2px 8px; border:1.5px solid var(--ink)}
+.pts-3{background:var(--amarillo)} .pts-1{background:var(--azul); color:#fff} .pts-0{background:#ddd}
+/* LEADERBOARD */
+table{width:100%; border-collapse:collapse; background:var(--card); border:2px solid var(--ink); box-shadow:5px 5px 0 var(--ink)}
+th,td{border-bottom:1px solid var(--ink); padding:12px 14px; text-align:left}
+th{font-family:'Spline Sans Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.14em; background:var(--ink); color:var(--paper)}
+td.num,th.num{text-align:right; font-family:'Spline Sans Mono',monospace}
+tr.podio-1 td:first-child{box-shadow:inset 5px 0 0 var(--amarillo)}
+tr.podio-2 td:first-child{box-shadow:inset 5px 0 0 var(--azul)}
+tr.podio-3 td:first-child{box-shadow:inset 5px 0 0 var(--rojo)}
+.big-pts{font-size:20px; font-weight:800}
+/* COLOMBIA */
+.co-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px}
+.co-card{background:var(--card); border:3px solid var(--ink); box-shadow:6px 6px 0 var(--rojo); padding:0; overflow:hidden}
+.co-band{height:10px; background:linear-gradient(180deg,var(--amarillo) 0 50%,var(--azul) 50% 75%,var(--rojo) 75% 100%)}
+.co-body{padding:18px}
+.co-vs{display:flex; align-items:center; gap:12px; font-weight:800; font-size:19px; flex-wrap:wrap}
+.co-when{font-family:'Spline Sans Mono',monospace; font-size:12px; margin:10px 0 4px}
+.co-where{font-family:'Spline Sans Mono',monospace; font-size:10px; color:var(--grey); text-transform:uppercase; letter-spacing:.08em}
+.co-actions{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap}
+.attendees{margin-top:12px; border-top:1px dashed var(--ink); padding-top:10px}
+.attendees b{font-family:'Spline Sans Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.1em}
+.chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px}
+.chip{font-family:'Spline Sans Mono',monospace; font-size:11px; background:var(--paper); border:1.5px solid var(--ink); padding:3px 9px; border-radius:20px}
+.chip i{font-style:normal; cursor:pointer; margin-left:6px; color:var(--rojo); font-weight:700}
+/* MEMBERS */
+.members{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px}
+.member{background:var(--card); border:2px solid var(--ink); padding:10px 14px; font-weight:700; box-shadow:3px 3px 0 var(--ink); display:flex; gap:10px; align-items:center}
+.member i{font-style:normal; cursor:pointer; color:var(--rojo); font-weight:800}
+.warn{background:var(--amarillo); border:2px solid var(--ink); padding:10px 14px; font-size:13px; margin:14px 0; box-shadow:3px 3px 0 var(--ink)}
+footer{border-top:3px solid var(--ink); padding:18px 4vw; font-family:'Spline Sans Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--grey); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px}
+@media(max-width:600px){nav button{flex:1; padding:12px 8px; font-size:11px}}
+</style>
+</head>
+<body>
+<div class="tricolor"></div>
+<header>
+  <h1>LA <em>POLLA</em> <span class="nodo">NODO</span></h1>
+  <div class="head-meta">MUNDIAL 2026 · <b>104 PARTIDOS</b><br>EXACTO <b>3 PTS</b> · ACIERTO GANADOR/EMPATE <b>1 PT</b><br>HORA COLOMBIANA</div>
+</header>
+<nav>
+  <button class="on" data-tab="apuestas">⚽ Apuestas</button>
+  <button data-tab="tabla">🏆 Tabla</button>
+  <button data-tab="colombia">🇨🇴 Colombia</button>
+  <button data-tab="resultados">📋 Resultados</button>
+  <button data-tab="integrantes">👥 Integrantes</button>
+</nav>
+<main>
+
+<section class="tab on" id="tab-apuestas">
+  <h2>Mis apuestas</h2>
+  <p class="note">ELIGE TU NOMBRE Y PREDICE MARCADORES. LAS APUESTAS SE BLOQUEAN CUANDO EL PARTIDO EMPIEZA.</p>
+  <div class="row">
+    <select id="who"></select>
+    <select id="betStage"><option value="">TODAS LAS FASES</option></select>
+    <div style="flex:1"></div>
+    <button class="btn blue" id="exportBtn">⬇ Exportar datos</button>
+    <button class="btn" id="importBtn">⬆ Importar datos</button>
+    <input type="file" id="importFile" accept=".json" style="display:none">
+  </div>
+  <div id="noMembers" class="warn" style="display:none">No hay integrantes todavía — agrégalos en la pestaña <b>Integrantes</b>.</div>
+  <div class="bets-grid" id="betsGrid"></div>
+</section>
+
+<section class="tab" id="tab-tabla">
+  <h2>Tabla de posiciones</h2>
+  <p class="note">3 PTS POR MARCADOR EXACTO · 1 PT POR ACERTAR GANADOR O EMPATE · SE CALCULA CON LOS RESULTADOS CARGADOS.</p>
+  <div id="board"></div>
+</section>
+
+<section class="tab" id="tab-colombia">
+  <h2>Partidos de Colombia 🇨🇴</h2>
+  <p class="note">PÚBLICO: CUALQUIERA PUEDE AGENDAR EL PARTIDO EN SU CALENDARIO (TEAMS/OUTLOOK) Y REGISTRARSE PARA VERLO.</p>
+  <div class="co-grid" id="coGrid"></div>
+</section>
+
+<section class="tab" id="tab-resultados">
+  <h2>Resultados oficiales</h2>
+  <p class="note">CARGA AQUÍ EL MARCADOR REAL CUANDO TERMINE CADA PARTIDO — LA TABLA SE ACTUALIZA SOLA.</p>
+  <div class="row"><select id="resStage"><option value="">TODAS LAS FASES</option></select></div>
+  <div class="bets-grid" id="resGrid"></div>
+</section>
+
+<section class="tab" id="tab-integrantes">
+  <h2>Integrantes de la oficina</h2>
+  <p class="note">LISTA FIJA: SOLO QUIENES ESTÉN AQUÍ PUEDEN APOSTAR.</p>
+  <div class="row">
+    <input id="newMember" placeholder="NOMBRE DEL INTEGRANTE" maxlength="30">
+    <button class="btn primary" id="addMember">+ Agregar</button>
+  </div>
+  <div class="members" id="memberList"></div>
+  <div class="warn">⚠ Franco contigo: este tablero guarda los datos <b>en el navegador de cada quien</b> (no hay servidor). Para consolidar la polla: cada integrante usa <b>Exportar datos</b> y el admin los <b>importa</b> — las apuestas se fusionan sin pisarse.</div>
+</section>
+
+</main>
+<footer><span>LA POLLA (NODO) · MUNDIAL 2026</span><span>HECHO EN LA OFICINA ☕</span></footer>
+
+<script>
+const MATCHES = __MATCHES__;
+const KEY='polla-nodo-v1';
+let DB=load();
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){return{}}}
+function save(){localStorage.setItem(KEY,JSON.stringify(DB));}
+DB.members=DB.members||[]; DB.bets=DB.bets||{}; DB.results=DB.results||{}; DB.attend=DB.attend||{}; save();
+
+const $=id=>document.getElementById(id);
+const DAYS=['dom','lun','mar','mié','jue','vie','sáb'];
+const flag=(c,l)=>c?`<img class="flag" src="https://flagcdn.com/w80/${c}.png" alt="${l}">`:`<div class="flag-tbd">${l.length<=4?l:'TBD'}</div>`;
+const started=m=>new Date(m.date+'T'+m.time+':00-05:00')<=new Date();
+const fmtWhen=m=>{const d=new Date(m.date+'T12:00:00-05:00');return `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1} · ${m.time} (hora COL)`;};
+
+/* tabs */
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button,.tab').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); $('tab-'+b.dataset.tab).classList.add('on'); renderAll();
+});
+
+/* stage filters */
+[...new Set(MATCHES.map(m=>m.stage))].forEach(s=>{
+  for(const sel of [$('betStage'),$('resStage')]){const o=document.createElement('option');o.value=s;o.textContent=s.toUpperCase();sel.appendChild(o);}
+});
+
+/* ICS */
+const pad=n=>String(n).padStart(2,'0');
+function icsFor(m){
+  const [y,mo,d]=m.date.split('-').map(Number),[h,mi]=m.time.split(':').map(Number);
+  const s=new Date(Date.UTC(y,mo-1,d,h+5,mi)),e=new Date(s.getTime()+72e5);
+  const f=t=>t.getUTCFullYear()+pad(t.getUTCMonth()+1)+pad(t.getUTCDate())+'T'+pad(t.getUTCHours())+pad(t.getUTCMinutes())+'00Z';
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//nodo//PollaWC26//ES','BEGIN:VEVENT',
+    `UID:polla-wc2026-m${m.match}@nodo`,`DTSTAMP:${f(new Date())}`,`DTSTART:${f(s)}`,`DTEND:${f(e)}`,
+    `SUMMARY:⚽ ${m.home} vs ${m.away} — ${m.stage} (La Polla nodo)`,`LOCATION:${m.venue}, ${m.city}`,
+    `DESCRIPTION:Mundial 2026 · ${m.time} hora Colombia · La Polla (nodo)`,
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Partido en 30 min','TRIGGER:-PT30M','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+}
+function downloadIcs(m){
+  const b=new Blob([icsFor(m)],{type:'text/calendar'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download=`M${m.match}_${m.home}_vs_${m.away}.ics`.replace(/\s+/g,'_'); a.click();
+}
+
+/* points */
+function points(bet,res){
+  if(!bet||!res||bet.h===''||bet.a===''||res.h===''||res.a==='')return null;
+  const bh=+bet.h,ba=+bet.a,rh=+res.h,ra=+res.a;
+  if(bh===rh&&ba===ra)return 3;
+  if(Math.sign(bh-ba)===Math.sign(rh-ra))return 1;
+  return 0;
+}
+
+/* APUESTAS */
+function renderWho(){
+  const who=$('who'); const cur=who.value;
+  who.innerHTML=DB.members.map(n=>`<option ${n===cur?'selected':''}>${n}</option>`).join('');
+  $('noMembers').style.display=DB.members.length?'none':'block';
+}
+function renderBets(){
+  renderWho();
+  const me=$('who').value, st=$('betStage').value, g=$('betsGrid');
+  if(!me){g.innerHTML='';return;}
+  DB.bets[me]=DB.bets[me]||{};
+  g.innerHTML=MATCHES.filter(m=>!st||m.stage===st).map(m=>{
+    const lock=started(m), bet=DB.bets[me][m.match]||{h:'',a:''}, res=DB.results[m.match];
+    const p=points(bet,res);
+    return `<div class="bet-card ${lock?'locked':''}">
+      <div class="bet-top"><span>P${m.match} · ${m.stage}</span><span>${fmtWhen(m)}</span></div>
+      <div class="bet-teams">
+        <div class="bt">${flag(m.home_code,m.home)}<span>${m.home}</span></div>
+        <input class="score-in" type="number" min="0" max="20" value="${bet.h}" ${lock?'disabled':''} data-m="${m.match}" data-s="h">
+        <b>—</b>
+        <input class="score-in" type="number" min="0" max="20" value="${bet.a}" ${lock?'disabled':''} data-m="${m.match}" data-s="a">
+        <div class="bt"><span>${m.away}</span>${flag(m.away_code,m.away)}</div>
+      </div>
+      <div class="bet-bottom">
+        <span>${res&&res.h!==''?`RESULTADO: ${res.h}–${res.a}`:(lock?'EN JUEGO / SIN RESULTADO':'ABIERTO')}</span>
+        ${p!==null?`<span class="pts-chip pts-${p}">${p} PTS</span>`:''}
+      </div></div>`;
+  }).join('');
+}
+$('betsGrid').addEventListener('input',e=>{
+  const i=e.target; if(!i.dataset.m)return;
+  const me=$('who').value; if(!me)return;
+  DB.bets[me]=DB.bets[me]||{}; DB.bets[me][i.dataset.m]=DB.bets[me][i.dataset.m]||{h:'',a:''};
+  DB.bets[me][i.dataset.m][i.dataset.s]=i.value; save();
+});
+$('who').onchange=renderBets; $('betStage').onchange=renderBets;
+
+/* RESULTADOS */
+function renderRes(){
+  const st=$('resStage').value;
+  $('resGrid').innerHTML=MATCHES.filter(m=>!st||m.stage===st).map(m=>{
+    const r=DB.results[m.match]||{h:'',a:''};
+    return `<div class="bet-card">
+      <div class="bet-top"><span>P${m.match} · ${m.stage}</span><span>${fmtWhen(m)}</span></div>
+      <div class="bet-teams">
+        <div class="bt">${flag(m.home_code,m.home)}<span>${m.home}</span></div>
+        <input class="score-in" type="number" min="0" max="20" value="${r.h}" data-m="${m.match}" data-s="h">
+        <b>—</b>
+        <input class="score-in" type="number" min="0" max="20" value="${r.a}" data-m="${m.match}" data-s="a">
+        <div class="bt"><span>${m.away}</span>${flag(m.away_code,m.away)}</div>
+      </div></div>`;
+  }).join('');
+}
+$('resGrid').addEventListener('input',e=>{
+  const i=e.target; if(!i.dataset.m)return;
+  DB.results[i.dataset.m]=DB.results[i.dataset.m]||{h:'',a:''};
+  DB.results[i.dataset.m][i.dataset.s]=i.value; save();
+});
+$('resStage').onchange=renderRes;
+
+/* TABLA */
+function renderBoard(){
+  const rows=DB.members.map(n=>{
+    let pts=0,ex=0,ok=0,played=0;
+    MATCHES.forEach(m=>{
+      const p=points((DB.bets[n]||{})[m.match],DB.results[m.match]);
+      if(p!==null){played++; pts+=p; if(p===3)ex++; if(p===1)ok++;}
+    });
+    return{n,pts,ex,ok,played};
+  }).sort((a,b)=>b.pts-a.pts||b.ex-a.ex);
+  $('board').innerHTML=rows.length?`<table><tr><th>#</th><th>Integrante</th><th class="num">Exactos</th><th class="num">Aciertos</th><th class="num">Evaluados</th><th class="num">Puntos</th></tr>`+
+    rows.map((r,i)=>`<tr class="podio-${i+1}"><td>${i+1}</td><td><b>${r.n}</b></td><td class="num">${r.ex}</td><td class="num">${r.ok}</td><td class="num">${r.played}</td><td class="num big-pts">${r.pts}</td></tr>`).join('')+'</table>'
+    :'<div class="warn">Aún no hay integrantes en la polla.</div>';
+}
+
+/* COLOMBIA */
+function renderCo(){
+  const cos=MATCHES.filter(m=>m.home_code==='co'||m.away_code==='co');
+  $('coGrid').innerHTML=cos.map(m=>{
+    const reg=DB.attend[m.match]||[];
+    return `<div class="co-card"><div class="co-band"></div><div class="co-body">
+      <div class="co-vs">${flag(m.home_code,m.home)} ${m.home} <span style="color:var(--grey)">vs</span> ${m.away} ${flag(m.away_code,m.away)}</div>
+      <div class="co-when">📅 ${fmtWhen(m)}</div>
+      <div class="co-where">${m.venue} · ${m.city} · ${m.stage}</div>
+      <div class="co-actions">
+        <button class="btn primary" onclick="downloadIcs(MATCHES.find(x=>x.match===${m.match}))">📆 Agendar partido</button>
+      </div>
+      <div class="attendees"><b>SE APUNTARON A VERLO (${reg.length})</b>
+        <div class="row" style="margin:8px 0 0">
+          <input placeholder="TU NOMBRE" maxlength="30" id="att-${m.match}" style="flex:1;min-width:120px">
+          <button class="btn" onclick="addAtt(${m.match})">✋ Me apunto</button>
+        </div>
+        <div class="chips">${reg.map((n,i)=>`<span class="chip">${n}<i onclick="rmAtt(${m.match},${i})">×</i></span>`).join('')}</div>
+      </div></div></div>`;
+  }).join('');
+}
+window.addAtt=mi=>{const v=$('att-'+mi).value.trim(); if(!v)return; (DB.attend[mi]=DB.attend[mi]||[]).push(v); save(); renderCo();};
+window.rmAtt=(mi,i)=>{DB.attend[mi].splice(i,1); save(); renderCo();};
+
+/* INTEGRANTES */
+function renderMembers(){
+  $('memberList').innerHTML=DB.members.map((n,i)=>`<div class="member">${n}<i onclick="rmMember(${i})">×</i></div>`).join('')||'<span class="note">— vacío —</span>';
+}
+$('addMember').onclick=()=>{
+  const v=$('newMember').value.trim(); if(!v)return;
+  if(DB.members.includes(v)){alert('Ya existe');return;}
+  DB.members.push(v); $('newMember').value=''; save(); renderAll();
+};
+$('newMember').addEventListener('keydown',e=>{if(e.key==='Enter')$('addMember').click();});
+window.rmMember=i=>{if(confirm('¿Eliminar a '+DB.members[i]+' y sus apuestas?')){delete DB.bets[DB.members[i]]; DB.members.splice(i,1); save(); renderAll();}};
+
+/* EXPORT / IMPORT (merge) */
+$('exportBtn').onclick=()=>{
+  const b=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download='polla_nodo_datos.json'; a.click();
+};
+$('importBtn').onclick=()=>$('importFile').click();
+$('importFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const x=JSON.parse(r.result);
+    (x.members||[]).forEach(n=>{if(!DB.members.includes(n))DB.members.push(n);});
+    Object.entries(x.bets||{}).forEach(([n,bs])=>{DB.bets[n]=Object.assign({},DB.bets[n],bs);});
+    Object.assign(DB.results,x.results||{});
+    Object.entries(x.attend||{}).forEach(([m,ns])=>{DB.attend[m]=[...new Set([...(DB.attend[m]||[]),...ns])];});
+    save(); renderAll(); alert('Datos fusionados ✔');
+  }catch(err){alert('Archivo inválido');}};
+  r.readAsText(f); e.target.value='';
+};
+
+function renderAll(){renderBets(); renderBoard(); renderCo(); renderRes(); renderMembers();}
+renderAll();
+</script>
+</body>
+</html>

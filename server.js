@@ -58,6 +58,25 @@ const TEAM_ES = {
 };
 
 // ── Supabase REST helper ─────────────────────────────────────────
+// sbPost: POST con return=representation (devuelve el objeto creado)
+async function sbPost(table, body) {
+  const opts = {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON,
+      'Authorization': `Bearer ${SUPABASE_ANON}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(body)
+  };
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, opts);
+    if (!res.ok) { const txt = await res.text().catch(()=>''); console.error(`[sbPost] ${res.status} ${table} — ${txt.slice(0,200)}`); return null; }
+    return res.json();
+  } catch(e) { console.error('[sbPost]', e.message); return null; }
+}
+
 async function sbRest(endpoint, method = 'GET', body = null) {
   const opts = {
     method,
@@ -602,6 +621,110 @@ app.get('/api/debug-live', async (req, res) => {
   res.json(out);
 });
 
+// ── MULTI-TENANT: gestión de pollas ─────────────────────────────
+app.use(express.json());
+
+function genCodigo() {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let c = '';
+  for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
+  return c;
+}
+
+// Crear una polla nueva
+app.post('/api/pollas/crear', async (req, res) => {
+  const { nombre, descripcion = '', nombre_admin, apellido_admin, password_admin } = req.body || {};
+  if (!nombre?.trim() || !nombre_admin?.trim() || !apellido_admin?.trim() || !password_admin?.trim())
+    return res.status(400).json({ error: 'Faltan campos: nombre, nombre_admin, apellido_admin, password_admin' });
+
+  // Generar código único (máx 10 intentos)
+  let codigo_invite, intentos = 0;
+  while (intentos++ < 10) {
+    const c = genCodigo();
+    const check = await sbRest(`/pollas?codigo_invite=eq.${c}&select=id`);
+    if (!check?.length) { codigo_invite = c; break; }
+  }
+  if (!codigo_invite) return res.status(500).json({ error: 'No se pudo generar código único' });
+
+  const pollaRes = await sbPost('pollas', {
+    nombre: nombre.trim(), descripcion: descripcion.trim(),
+    codigo_invite, password_admin: password_admin.trim(), max_miembros: 30
+  });
+  if (!pollaRes?.[0]) return res.status(500).json({ error: 'Error al crear la polla en base de datos' });
+
+  const polla = pollaRes[0];
+  const miembroRes = await sbPost('polla_miembros', {
+    polla_id: polla.id,
+    nombre: nombre_admin.trim(), apellido: apellido_admin.trim(), es_admin: true
+  });
+  if (!miembroRes?.[0]) return res.status(500).json({ error: 'Polla creada pero falló registro del admin' });
+
+  res.json({ polla, miembro: miembroRes[0] });
+});
+
+// Unirse a una polla existente (o re-login si ya existe el nombre)
+app.post('/api/pollas/unirse', async (req, res) => {
+  const { codigo_invite, nombre, apellido } = req.body || {};
+  if (!codigo_invite?.trim() || !nombre?.trim() || !apellido?.trim())
+    return res.status(400).json({ error: 'Faltan campos: codigo_invite, nombre, apellido' });
+
+  const pollas = await sbRest(`/pollas?codigo_invite=eq.${codigo_invite.trim().toUpperCase()}&select=*`);
+  if (!pollas?.length) return res.status(404).json({ error: 'Código de polla no encontrado. Revísalo con quien te invitó.' });
+
+  const polla = pollas[0];
+  if (!polla.activa) return res.status(400).json({ error: 'Esta polla ya no está activa.' });
+
+  // Re-login: si el nombre ya existe, devolver miembro existente
+  const existing = await sbRest(
+    `/polla_miembros?polla_id=eq.${polla.id}&nombre=eq.${encodeURIComponent(nombre.trim())}&apellido=eq.${encodeURIComponent(apellido.trim())}&select=*`
+  );
+  if (existing?.length) return res.json({ polla, miembro: existing[0], relogin: true });
+
+  // Verificar cupo (max 30)
+  const members = await sbRest(`/polla_miembros?polla_id=eq.${polla.id}&select=id`);
+  if (members && members.length >= polla.max_miembros)
+    return res.status(400).json({ error: `Esta polla ya tiene ${polla.max_miembros} participantes (máximo).` });
+
+  const miembroRes = await sbPost('polla_miembros', {
+    polla_id: polla.id, nombre: nombre.trim(), apellido: apellido.trim(), es_admin: false
+  });
+  if (!miembroRes?.[0]) return res.status(500).json({ error: 'Error al unirse a la polla' });
+
+  res.json({ polla, miembro: miembroRes[0] });
+});
+
+// Info de una polla + sus miembros (por código de invitación)
+app.get('/api/pollas/:codigo', async (req, res) => {
+  const codigo = req.params.codigo.toUpperCase();
+  const pollas = await sbRest(
+    `/pollas?codigo_invite=eq.${codigo}&select=id,nombre,descripcion,codigo_invite,max_miembros,activa,created_at`
+  );
+  if (!pollas?.length) return res.status(404).json({ error: 'Polla no encontrada' });
+  const polla = pollas[0];
+  const miembros = await sbRest(`/polla_miembros?polla_id=eq.${polla.id}&select=id,nombre,apellido,es_admin,joined_at&order=joined_at.asc`);
+  res.json({ ...polla, miembros: miembros || [] });
+});
+
+// El admin de la polla elimina a un miembro
+app.delete('/api/pollas/:pollaId/miembros/:miembroId', async (req, res) => {
+  const { pollaId, miembroId } = req.params;
+  const { password_admin } = req.body || {};
+  if (!password_admin) return res.status(400).json({ error: 'Se requiere la contraseña del administrador' });
+
+  const pollas = await sbRest(`/pollas?id=eq.${pollaId}&select=password_admin`);
+  if (!pollas?.length) return res.status(404).json({ error: 'Polla no encontrada' });
+  if (pollas[0].password_admin !== password_admin.trim())
+    return res.status(403).json({ error: 'Contraseña de administrador incorrecta' });
+
+  const miembro = await sbRest(`/polla_miembros?id=eq.${miembroId}&polla_id=eq.${pollaId}&select=es_admin`);
+  if (!miembro?.length) return res.status(404).json({ error: 'Miembro no encontrado' });
+  if (miembro[0].es_admin) return res.status(400).json({ error: 'No puedes eliminar al administrador' });
+
+  await sbRest(`/polla_miembros?id=eq.${miembroId}`, 'DELETE');
+  res.json({ ok: true });
+});
+
+// ── Static files y SPA fallback ──────────────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.get('*',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));

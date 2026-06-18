@@ -247,7 +247,14 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
 <!-- INTEGRANTES -->
 <section class="tab" id="tab-integrantes">
   <h2>Integrantes</h2>
-  <p class="note">TODOS LOS REGISTRADOS EN LA POLLA.</p>
+  <p class="note">TODOS LOS PARTICIPANTES EN ESTA POLLA.</p>
+  <div id="inviteBox" style="background:#001166;color:#fff;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px">Código de invitación</div>
+      <div id="inviteCodeDisplay" style="font-size:24px;font-weight:900;letter-spacing:.18em;color:#FCD116"></div>
+    </div>
+    <button onclick="compartirCodigo()" style="background:#FCD116;color:#001166;border:none;padding:10px 18px;font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer">📋 Copiar enlace</button>
+  </div>
   <div class="bets-grid" id="memberList"><div class="loading">Cargando…</div></div>
 </section>
 
@@ -286,12 +293,14 @@ footer{background:var(--nodo);color:rgba(255,255,255,.4);padding:16px 4vw;font-f
 
 <script>
 const sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-const sesion = JSON.parse(localStorage.getItem('polla-sesion') || 'null');
+const sesion = JSON.parse(localStorage.getItem('polla-multitenant-sesion') || 'null');
 if (!sesion) { window.location.href = '/'; }
+// Compatibilidad: sesion.id puede venir de la versión anterior
+if (!sesion.miembro_id && sesion.id) sesion.miembro_id = sesion.id;
 
 document.getElementById('userChip').style.display = 'flex';
 document.getElementById('userLabel').textContent = sesion.nombre + ' ' + sesion.apellido;
-window.cerrarSesion = () => { localStorage.removeItem('polla-sesion'); window.location.href = '/'; };
+window.cerrarSesion = () => { localStorage.removeItem('polla-multitenant-sesion'); window.location.href = '/'; };
 
 const $ = id => document.getElementById(id);
 const DAYS = ['dom','lun','mar','mié','jue','vie','sáb'];
@@ -447,7 +456,7 @@ async function init() {
   const [{ data: partidos },{ data: resultados },{ data: apuestas }] = await Promise.all([
     sb.from('partidos').select('*').order('fecha').order('hora'),
     sb.from('resultados').select('*'),
-    sb.from('apuestas').select('*').eq('usuario_id', sesion.id)
+    sb.from('apuestas').select('*').eq('polla_miembro_id', sesion.miembro_id)
   ]);
 
   MATCHES = partidos || [];
@@ -565,10 +574,10 @@ async function saveApuesta(mid) {
   const m = MATCHES.find(x => x.id === mid);
   if (!m || betLocked(m)) return;
   await sb.from('apuestas').upsert({
-    usuario_id: sesion.id, partido_id: mid,
+    polla_miembro_id: sesion.miembro_id, partido_id: mid,
     goles_local: bet.gl, goles_vis: bet.gv,
     updated_at: new Date().toISOString()
-  }, { onConflict: 'usuario_id,partido_id' });
+  }, { onConflict: 'polla_miembro_id,partido_id' });
   const card = document.getElementById('card-'+mid);
   if (card) card.classList.remove('saving');
 }
@@ -695,20 +704,20 @@ function renderRes() {
 // ── TABLA ──────────────────────────────────────────
 async function renderBoard() {
   const [{ data, error }, { data: allProns }, { data: resFases }] = await Promise.all([
-    sb.from('v_tabla').select('*'),
-    sb.from('pronosticos_fase').select('usuario_id,fase,equipos'),
+    sb.from('v_tabla_polla').select('*').eq('polla_id', sesion.polla_id),
+    sb.from('pronosticos_fase').select('polla_miembro_id,fase,equipos'),
     sb.from('resultados_fase').select('*').eq('confirmado', true),
   ]);
   if (error) {
-    $('board').innerHTML = `<div class="warn">⚠️ Error cargando tabla: ${error.message}<br><small>¿Ya corriste el schema.sql actualizado en Supabase?</small></div>`;
+    $('board').innerHTML = `<div class="warn">⚠️ Error cargando tabla: ${error.message}<br><small>¿Ya corriste el SCHEMA_MULTITENANT.sql en Supabase?</small></div>`;
     return;
   }
   if (!data || data.length === 0) {
-    $('board').innerHTML = '<div class="warn">⚠️ No hay usuarios registrados en la polla, o la vista v_tabla no existe.<br><small>Corre el schema.sql completo en Supabase SQL Editor.</small></div>';
+    $('board').innerHTML = '<div class="warn">⚠️ No hay participantes en esta polla todavía.<br><small>Comparte el código de invitación para que se unan.</small></div>';
     return;
   }
 
-  // Calcular puntos de llaves por usuario
+  // Calcular puntos de llaves por miembro
   const confirmedFases = {};
   (resFases || []).forEach(r => { confirmedFases[r.fase] = new Set(r.equipos || []); });
   const bracketPts = {};
@@ -716,14 +725,14 @@ async function renderBoard() {
     const conf = confirmedFases[p.fase];
     if (!conf || conf.size === 0) return;
     const pts = (p.equipos || []).filter(e => conf.has(e)).length * (FASE_PTS[p.fase] || 0);
-    bracketPts[p.usuario_id] = (bracketPts[p.usuario_id] || 0) + pts;
+    bracketPts[p.polla_miembro_id] = (bracketPts[p.polla_miembro_id] || 0) + pts;
   });
   const hasBracket = Object.keys(confirmedFases).length > 0;
 
   const rows = (data || []).map(r => ({
     ...r,
-    pts_llaves: bracketPts[r.id] || 0,
-    pts_total: (r.puntos || 0) + (bracketPts[r.id] || 0)
+    pts_llaves: bracketPts[r.miembro_id] || 0,
+    pts_total: (r.puntos || 0) + (bracketPts[r.miembro_id] || 0)
   })).sort((a, b) => b.pts_total - a.pts_total || b.exactos - a.exactos);
 
   $('board').innerHTML = `<table>
@@ -736,9 +745,9 @@ async function renderBoard() {
       <th class="num" style="color:var(--amarillo)">💰 Pesos</th>
     </tr>` +
     rows.map((r, i) =>
-      `<tr class="${i<3?'podio-'+(i+1):''} ${r.id===sesion.id?'yo':''}">
+      `<tr class="${i<3?'podio-'+(i+1):''} ${r.miembro_id===sesion.miembro_id?'yo':''}">
         <td>${i+1}</td>
-        <td><b>${r.nombre_completo}</b>${r.id===sesion.id?' <small style="font-size:10px;color:var(--grey)">(tú)</small>':''}</td>
+        <td><b>${r.nombre_completo}</b>${r.miembro_id===sesion.miembro_id?' <small style="font-size:10px;color:var(--grey)">(tú)</small>':''}</td>
         <td class="num">${r.exactos||0}</td>
         <td class="num">${r.aciertos||0}</td>
         <td class="num">${r.evaluados||0}</td>
@@ -756,20 +765,20 @@ async function renderCo() {
   const ids  = cos.map(m => m.id);
   const { data: asis } = await sb
     .from('asistencias')
-    .select('id,usuario_id,partido_id,usuarios(nombre,apellido)')
+    .select('id,polla_miembro_id,partido_id,polla_miembros(nombre,apellido)')
     .in('partido_id', ids);
 
   const asisMap = {};
   (asis||[]).forEach(a => {
     (asisMap[a.partido_id] = asisMap[a.partido_id]||[]).push({
-      id: a.id, usuario_id: a.usuario_id,
-      nombre: a.usuarios.nombre + ' ' + a.usuarios.apellido
+      id: a.id, polla_miembro_id: a.polla_miembro_id,
+      nombre: a.polla_miembros.nombre + ' ' + a.polla_miembros.apellido
     });
   });
 
   $('coGrid').innerHTML = cos.map(m => {
     const reg = asisMap[m.id] || [];
-    const yaApuntado = reg.some(a => a.usuario_id === sesion.id);
+    const yaApuntado = reg.some(a => a.polla_miembro_id === sesion.miembro_id);
     return `<div class="co-card">
       <div class="co-band"></div>
       <div class="co-body">
@@ -793,27 +802,42 @@ async function renderCo() {
 }
 
 window.toggleAsis = async (pid, add) => {
-  if (add) await sb.from('asistencias').upsert({ usuario_id: sesion.id, partido_id: pid }, { onConflict: 'usuario_id,partido_id' });
-  else     await sb.from('asistencias').delete().eq('usuario_id', sesion.id).eq('partido_id', pid);
+  if (add) await sb.from('asistencias').upsert({ polla_miembro_id: sesion.miembro_id, partido_id: pid }, { onConflict: 'polla_miembro_id,partido_id' });
+  else     await sb.from('asistencias').delete().eq('polla_miembro_id', sesion.miembro_id).eq('partido_id', pid);
   renderCo();
 };
 
 // ── INTEGRANTES ──────────────────────────────────
 async function renderMembers() {
-  const { data } = await sb.from('usuarios').select('id,nombre,apellido,created_at').order('apellido');
+  const { data } = await sb.from('polla_miembros').select('id,nombre,apellido,joined_at').eq('polla_id', sesion.polla_id).order('apellido');
   $('memberList').innerHTML = (data||[]).map(u => {
     const ini = (u.nombre[0]||'') + (u.apellido[0]||'');
-    const esYo = u.id === sesion.id;
+    const esYo = u.id === sesion.miembro_id;
     const nombre = u.nombre + ' ' + u.apellido;
     return `<div class="member-card" ${esYo?'style="border-color:var(--amarillo);box-shadow:3px 3px 0 var(--amarillo)"':''} onclick="openMemberModal('${u.id}','${nombre.replace(/'/g,"\\'")}')">
       <div class="member-avatar">${ini.toUpperCase()}</div>
       <div style="flex:1">
         <div style="font-weight:700;font-size:15px">${u.nombre} ${u.apellido} ${esYo?'<small style="font-size:11px;color:var(--grey)">(tú)</small>':''}</div>
-        <div style="font-family:monospace;font-size:10px;color:var(--grey)">Registrado ${new Date(u.created_at).toLocaleDateString('es-CO')}</div>
+        <div style="font-family:monospace;font-size:10px;color:var(--grey)">Se unió ${new Date(u.joined_at||u.created_at).toLocaleDateString('es-CO')}</div>
       </div>
       <span style="font-family:'Spline Sans Mono',monospace;font-size:10px;color:var(--grey)">Ver apuestas →</span>
     </div>`;
   }).join('') || '<div class="warn">Sin integrantes registrados.</div>';
+}
+
+// ── COMPARTIR CÓDIGO DE INVITACIÓN ─────────────────
+function compartirCodigo() {
+  if (!sesion?.codigo_invite) return;
+  const link = `${location.origin}/?code=${sesion.codigo_invite}`;
+  navigator.clipboard?.writeText(link)
+    .then(() => alert('¡Enlace copiado!\n\n' + link))
+    .catch(() => prompt('Copia este enlace:', link));
+}
+
+// Mostrar código en la pestaña integrantes
+const inviteCodeEl = document.getElementById('inviteCodeDisplay');
+if (inviteCodeEl && sesion?.codigo_invite) {
+  inviteCodeEl.textContent = sesion.codigo_invite;
 }
 
 // ── TABS ──────────────────────────────────────────
@@ -918,7 +942,7 @@ window.openMemberModal = async (uid, name) => {
   document.getElementById('modal-member').style.display = 'block';
   document.body.style.overflow = 'hidden';
 
-  const { data: apuestas } = await sb.from('apuestas').select('*').eq('usuario_id', uid);
+  const { data: apuestas } = await sb.from('apuestas').select('*').eq('polla_miembro_id', uid);
   const userBets = {};
   (apuestas || []).forEach(a => { userBets[a.partido_id] = { gl: a.goles_local, gv: a.goles_vis }; });
 
@@ -1024,7 +1048,7 @@ let BRACKET_OFIC = {};  // fase -> { equipos:[], confirmado:bool }
 
 async function initBracket() {
   const [{ data: prons }, { data: resFases }] = await Promise.all([
-    sb.from('pronosticos_fase').select('*').eq('usuario_id', sesion.id),
+    sb.from('pronosticos_fase').select('*').eq('polla_miembro_id', sesion.miembro_id),
     sb.from('resultados_fase').select('*'),
   ]);
   BRACKET_USER = {};
@@ -1145,8 +1169,8 @@ window.saveBracket = async (faseId) => {
   const btn = document.querySelector(`#bf-${faseId} .btn.primary`);
   if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
   const { error } = await sb.from('pronosticos_fase').upsert(
-    { usuario_id: sesion.id, fase: faseId, equipos, updated_at: new Date().toISOString() },
-    { onConflict: 'usuario_id,fase' }
+    { polla_miembro_id: sesion.miembro_id, fase: faseId, equipos, updated_at: new Date().toISOString() },
+    { onConflict: 'polla_miembro_id,fase' }
   );
   if (btn) {
     btn.textContent = error ? '⚠ Error' : '✓ Guardado';

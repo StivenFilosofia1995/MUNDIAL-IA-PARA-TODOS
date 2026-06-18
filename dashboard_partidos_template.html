@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MUNDIAL 2026 — El Marcador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,600&family=Archivo:wght@400;600;800&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0a0a0a; --paper:#ffffff; --grey:#6b6b6b; --line:#0a0a0a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:'Archivo',sans-serif;
+  background-image:radial-gradient(circle, rgba(0,0,0,.05) 1px, transparent 1px);
+  background-size:22px 22px;
+}
+/* ---------- MASTHEAD ---------- */
+header{border-bottom:6px double var(--ink); background:var(--paper); padding:28px 4vw 18px}
+.kicker{display:flex; justify-content:space-between; font-family:'Spline Sans Mono',monospace; font-size:11px; letter-spacing:.18em; text-transform:uppercase; border-bottom:1px solid var(--ink); padding-bottom:8px}
+h1{font-family:'Playfair Display',serif; font-weight:900; font-size:clamp(42px,8vw,104px); line-height:.95; letter-spacing:-.02em; margin:14px 0 4px}
+h1 .outline{color:var(--paper); -webkit-text-stroke:2px var(--ink)}
+.sub{display:flex; flex-wrap:wrap; gap:18px; font-family:'Spline Sans Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:.12em; margin-top:10px}
+.sub b{font-weight:600}
+.sub .dot::before{content:"●"; font-size:8px; vertical-align:2px; margin-right:18px}
+/* ---------- TOOLBAR ---------- */
+.toolbar{position:sticky; top:0; z-index:50; background:var(--paper); border-bottom:2px solid var(--ink); padding:10px 4vw; display:flex; flex-wrap:wrap; gap:10px; align-items:center}
+.toolbar select,.toolbar input{
+  font-family:'Spline Sans Mono',monospace; font-size:12px; background:var(--paper); color:var(--ink);
+  border:2px solid var(--ink); padding:8px 10px; border-radius:0; outline:none; text-transform:uppercase; letter-spacing:.06em;
+}
+.toolbar input{flex:1; min-width:160px}
+.toggle{font-family:'Spline Sans Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:.08em; border:2px solid var(--ink); padding:8px 12px; cursor:pointer; background:var(--paper); user-select:none; transition:all .12s}
+.toggle.on{background:var(--ink); color:var(--paper)}
+.count{margin-left:auto; font-family:'Spline Sans Mono',monospace; font-size:11px; letter-spacing:.1em}
+/* ---------- DAY BLOCKS ---------- */
+main{padding:0 4vw 80px; max-width:1280px; margin:0 auto}
+.day{margin-top:46px}
+.dayhead{display:flex; align-items:baseline; gap:16px; border-bottom:3px solid var(--ink); padding-bottom:6px}
+.daynum{font-family:'Playfair Display',serif; font-weight:900; font-size:54px; line-height:1}
+.dayname{font-family:'Spline Sans Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:.2em}
+.daycount{margin-left:auto; font-family:'Spline Sans Mono',monospace; font-size:11px; color:var(--grey)}
+.today-tag{font-family:'Spline Sans Mono',monospace; font-size:10px; background:var(--ink); color:var(--paper); padding:3px 8px; letter-spacing:.15em; animation:blink 1.2s steps(2) infinite}
+@keyframes blink{50%{opacity:.55}}
+/* ---------- MATCH ROW ---------- */
+.match{
+  display:grid; grid-template-columns:86px 1fr 110px; gap:0; align-items:stretch;
+  border-bottom:1px solid var(--ink); transition:background .12s;
+}
+.match:hover{background:var(--ink); color:var(--paper)}
+.match:hover .meta, .match:hover .stage{color:var(--paper)}
+.match:hover .ics-btn{border-color:var(--paper); color:var(--paper)}
+.match:hover .vs{color:var(--paper)}
+.time{
+  font-family:'Spline Sans Mono',monospace; font-weight:600; font-size:20px;
+  display:flex; flex-direction:column; justify-content:center; border-right:1px solid var(--ink); padding:16px 10px;
+}
+.time small{font-size:9px; letter-spacing:.18em; font-weight:400; margin-top:2px}
+.teams{display:flex; align-items:center; gap:14px; padding:14px 16px; flex-wrap:wrap}
+.team{display:flex; align-items:center; gap:10px; min-width:0}
+.team .name{font-weight:800; font-size:clamp(15px,2vw,21px); text-transform:uppercase; letter-spacing:.01em; white-space:nowrap}
+.flag{width:38px; height:26px; object-fit:cover; border:1px solid var(--ink); box-shadow:2px 2px 0 var(--ink); flex:none}
+.flag-tbd{width:38px; height:26px; border:1px dashed var(--ink); display:flex; align-items:center; justify-content:center; font-family:'Spline Sans Mono',monospace; font-size:9px; flex:none; background:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(0,0,0,.12) 4px,rgba(0,0,0,.12) 5px)}
+.match:hover .flag-tbd{border-color:var(--paper); color:var(--paper)}
+.vs{font-family:'Playfair Display',serif; font-style:italic; font-size:15px; color:var(--grey)}
+.meta{flex-basis:100%; font-family:'Spline Sans Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--grey)}
+.right{display:flex; flex-direction:column; align-items:flex-end; justify-content:center; gap:6px; padding:10px 12px; border-left:1px solid var(--ink)}
+.stage{font-family:'Spline Sans Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--grey); text-align:right}
+.ics-btn{font-family:'Spline Sans Mono',monospace; font-size:10px; letter-spacing:.1em; border:1px solid var(--ink); background:transparent; color:var(--ink); padding:4px 8px; cursor:pointer; text-transform:uppercase}
+.ics-btn:active{transform:translate(1px,1px)}
+.co-match{box-shadow:inset 6px 0 0 var(--ink)}
+footer{border-top:6px double var(--ink); margin-top:60px; padding:20px 4vw; font-family:'Spline Sans Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px}
+.empty{padding:60px 0; text-align:center; font-family:'Playfair Display',serif; font-style:italic; font-size:24px; color:var(--grey)}
+@media(max-width:640px){
+  .match{grid-template-columns:64px 1fr}
+  .right{display:none}
+  .time{font-size:15px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker"><span>FIFA WORLD CUP 26 · EE.UU. — MÉXICO — CANADÁ</span><span>HORA COLOMBIANA (COT · UTC−5)</span></div>
+  <h1>MUNDIAL <span class="outline">2026</span></h1>
+  <div class="sub">
+    <span><b>104</b> PARTIDOS</span><span class="dot"><b>48</b> SELECCIONES</span><span class="dot"><b>16</b> SEDES</span><span class="dot">11 JUN — 19 JUL</span><span class="dot">EL MARCADOR · EDICIÓN NODO</span>
+  </div>
+</header>
+
+<div class="toolbar">
+  <select id="fStage"><option value="">TODAS LAS FASES</option></select>
+  <input id="fTeam" type="text" placeholder="BUSCAR SELECCIÓN / CIUDAD…">
+  <div class="toggle" id="fCol">🇨🇴 SOLO COLOMBIA</div>
+  <div class="toggle" id="fNext">SOLO PRÓXIMOS</div>
+  <span class="count" id="count"></span>
+</div>
+
+<main id="list"></main>
+
+<footer>
+  <span>FUENTE: FIFA.COM · CALENDARIO OFICIAL</span>
+  <span>TODOS LOS HORARIOS EN HORA DE COLOMBIA</span>
+</footer>
+
+<script>
+const MATCHES = __MATCHES__;
+const DAYS=['DOMINGO','LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO'];
+const MONTHS=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+const list=document.getElementById('list');
+const fStage=document.getElementById('fStage'), fTeam=document.getElementById('fTeam');
+const fCol=document.getElementById('fCol'), fNext=document.getElementById('fNext'), count=document.getElementById('count');
+
+[...new Set(MATCHES.map(m=>m.stage))].forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s.toUpperCase();fStage.appendChild(o);});
+
+function flag(code,label){
+  return code? `<img class="flag" src="https://flagcdn.com/w80/${code}.png" alt="${label}" loading="lazy">`
+             : `<div class="flag-tbd">${label.length<=4?label:'TBD'}</div>`;
+}
+function pad(n){return String(n).padStart(2,'0');}
+function icsFor(m){
+  const [y,mo,d]=m.date.split('-').map(Number), [h,mi]=m.time.split(':').map(Number);
+  const s=new Date(Date.UTC(y,mo-1,d,h+5,mi)), e=new Date(s.getTime()+72e5);
+  const f=t=>t.getUTCFullYear()+pad(t.getUTCMonth()+1)+pad(t.getUTCDate())+'T'+pad(t.getUTCHours())+pad(t.getUTCMinutes())+'00Z';
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//nodo//WC26//ES','BEGIN:VEVENT',
+    `UID:wc2026-m${m.match}@nodo`,`DTSTAMP:${f(new Date())}`,`DTSTART:${f(s)}`,`DTEND:${f(e)}`,
+    `SUMMARY:⚽ ${m.home} vs ${m.away} — ${m.stage}`,`LOCATION:${m.venue}, ${m.city}`,
+    `DESCRIPTION:Mundial 2026 · Partido ${m.match} · ${m.time} hora Colombia`,
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Partido en 30 min','TRIGGER:-PT30M','END:VALARM',
+    'END:VEVENT','END:VCALENDAR'].join('\r\n');
+}
+function download(m){
+  const b=new Blob([icsFor(m)],{type:'text/calendar'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download=`M${m.match}_${m.home}_vs_${m.away}.ics`.replace(/\s+/g,'_'); a.click();
+}
+function isCol(m){return m.home_code==='co'||m.away_code==='co';}
+function render(){
+  const q=fTeam.value.trim().toLowerCase(), st=fStage.value;
+  const onlyCol=fCol.classList.contains('on'), onlyNext=fNext.classList.contains('on');
+  const now=new Date();
+  let ms=MATCHES.filter(m=>
+    (!st||m.stage===st)&&(!onlyCol||isCol(m))&&
+    (!q||(m.home+' '+m.away+' '+m.city+' '+m.venue).toLowerCase().includes(q))&&
+    (!onlyNext||new Date(m.date+'T'+m.time+':00-05:00')>=now)
+  );
+  count.textContent=ms.length+' / 104 PARTIDOS';
+  if(!ms.length){list.innerHTML='<div class="empty">— sin partidos para este filtro —</div>';return;}
+  const todayStr=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Bogota'}).format(now);
+  let html='', lastDate='';
+  ms.forEach(m=>{
+    if(m.date!==lastDate){
+      if(lastDate)html+='</section>';
+      lastDate=m.date;
+      const dt=new Date(m.date+'T12:00:00-05:00');
+      const n=ms.filter(x=>x.date===m.date).length;
+      html+=`<section class="day"><div class="dayhead">
+        <span class="daynum">${dt.getDate()}</span>
+        <span class="dayname">${DAYS[dt.getDay()]} · ${MONTHS[dt.getMonth()]} 2026</span>
+        ${m.date===todayStr?'<span class="today-tag">HOY</span>':''}
+        <span class="daycount">${n} PARTIDO${n>1?'S':''}</span></div>`;
+    }
+    html+=`<div class="match ${isCol(m)?'co-match':''}">
+      <div class="time">${m.time}<small>COL</small></div>
+      <div class="teams">
+        <span class="team">${flag(m.home_code,m.home)}<span class="name">${m.home}</span></span>
+        <span class="vs">vs.</span>
+        <span class="team">${flag(m.away_code,m.away)}<span class="name">${m.away}</span></span>
+        <span class="meta">${m.venue} — ${m.city} · PARTIDO ${m.match}</span>
+      </div>
+      <div class="right"><span class="stage">${m.stage}</span>
+        <button class="ics-btn" data-m="${m.match}">+ AGENDAR</button></div>
+    </div>`;
+  });
+  html+='</section>';
+  list.innerHTML=html;
+}
+list.addEventListener('click',e=>{
+  const b=e.target.closest('.ics-btn'); if(!b)return;
+  const m=MATCHES.find(x=>x.match===+b.dataset.m); if(m)download(m);
+});
+fStage.onchange=render; fTeam.oninput=render;
+fCol.onclick=()=>{fCol.classList.toggle('on');render();};
+fNext.onclick=()=>{fNext.classList.toggle('on');render();};
+render();
+</script>
+</body>
+</html>
